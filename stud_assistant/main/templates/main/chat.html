@@ -1,0 +1,72 @@
+<!-- index.html -->
+ {% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AI Chat — Single File</title>
+  <link rel="stylesheet" href="../../styles/main/chat.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="panel sidebar" aria-label="Conversations">
+      <div class="top">
+        <div class="logo">AI</div>
+        <div>
+          <div style="font-weight:700">AI Chat</div>
+          <div class="small">Single-file demo — paste your API details in settings</div>
+        </div>
+      </div>
+
+      <div class="conversations" id="conversations" role="list"></div>
+
+      <button class="new-btn" id="newConv">+ New conversation</button>
+<!-- 
+      <div class="settings">
+        <label class="small">API Endpoint</label>
+        <input id="apiEndpoint" type="text" placeholder="https://api.example.com/v1/chat/completions" aria-label="API endpoint">
+
+        <label class="small">API Key</label>
+        <input id="apiKey" type="text" placeholder="sk-... (or leave empty to not send auth)" aria-label="API key">
+
+        <div class="row">
+          <label class="small">Model</label>
+          <select id="model">
+            <option value="gpt-5-mini">gpt-5-mini</option>
+            <option value="gpt-4o">gpt-4o</option>
+            <option value="gpt-4o-mini">gpt-4o-mini</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <label class="small">Temperature</label>
+          <input id="temperature" type="range" min="0" max="1" step="0.05" value="0.2">
+          <div id="tempVal" class="small">0.20</div>
+        </div>
+
+        <div class="row">
+          <button id="clearBtn" class="muted-btn">Clear chat</button>
+          <button id="downloadBtn" class="muted-btn">Download</button>
+        </div>
+      </div> -->
+    </aside>
+
+    <main class="panel chat" aria-live="polite">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-weight:700">Conversation</div>
+        <div class="small" id="status">Idle</div>
+      </div>
+
+      <div class="messages" id="messages" role="log" aria-relevant="additions"></div>
+
+      <form id="composer" class="composer" onsubmit="return false;" aria-label="Message composer">
+        <textarea id="input" placeholder="Type your message... (Shift+Enter for newline)" aria-label="Message input"></textarea>
+        <button id="sendBtn" type="button">Send</button>
+      </form>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
