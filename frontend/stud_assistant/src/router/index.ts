@@ -1,11 +1,11 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import SimpleChat from '@/components/SimpleChat.vue'
+import Chat from '@/components/Chat.vue'
 
 const routes = [
   {
     path: '/',
     name: 'Home',
-    component: SimpleChat
+    component: Chat
   },
   // Add more routes here later
 ]
