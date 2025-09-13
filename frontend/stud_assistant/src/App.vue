@@ -1,4 +1,5 @@
 <template>
+  <router-view />
   <div class="chat-app">
     <div class="messages">
       <div v-for="(msg, i) in messages" :key="i" :class="msg.role">
