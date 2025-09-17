@@ -74,8 +74,12 @@ WSGI_APPLICATION = "stud_assistant.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "stud_assistant",
+        'USER':'retives',
+        'PASSWORD':'2bev45rt',
+        'HOST':'localhost',
+        'PORT':'3306',  
     }
 }
 
