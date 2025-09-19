@@ -15,6 +15,7 @@
 </template>
 
 <script>
+import axios from "axios";
 
 export default {
   name: "SimpleChat",
@@ -31,6 +32,15 @@ export default {
       model: "qwen2.5:latest",
       
     };
+  },
+  mounted() {
+    axios.get('http://localhost:8000/')
+      .then(response => {
+        this.apiKey = response.data.apikey;
+      })
+      .catch(error => {
+        console.error("Error fetching API key:", error);
+      });
   },
   methods: {
     // Request method to the LLM
