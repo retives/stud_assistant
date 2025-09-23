@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.core.models import User
 from app.api.schemas.user import UserCreate
+from uuid import uuid4
 import re
 
 router = APIRouter()
@@ -25,13 +26,13 @@ async def signup(user: UserCreate, db: Session = Depends(get_db)):
     if user.password != user.repeat_password:
         raise HTTPException(status_code=400, detail="Passwords don't match")
 
-    if len(password) < 8 or not re.search(r"[A-Za-z]", password) or not re.search(r"\d", password):
+    if len(user.password) < 8 or not re.search(r"[A-Za-z]", user.password) or not re.search(r"\d", user.password):
         raise HTTPException(status_code=400, detail="Password too weak")
 
-    from app.core.security import hash_password
+    # from app.core.security import hash_password
 
     # hashed_pw = hash_password(user.password)
-    new_user = User(username=user.username, email=user.email, hashed_password=user.password)
+    new_user = User(id = uuid4(), username=user.username, email=user.email, hashed_password=user.password)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
