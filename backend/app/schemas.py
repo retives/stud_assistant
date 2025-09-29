@@ -1,19 +1,24 @@
-from pydantic import BaseModel
-from uuid import UUID
+from pydantic import BaseModel, EmailStr, Field
 
-
+# Shared properties
 class UserBase(BaseModel):
-    email: str
+    email: EmailStr = Field(min_length=5, max_length=120)
+    username: str = Field(min_length=3, max_length=50)
     is_active: bool = True
-    is_verified: bool = False
     is_superuser: bool = False
-    
-class UserCreate(UserBase):
-    password: str
 
-class UserLogin():
-    password: str 
+# For creating a new user (input)
+class UserCreate(UserBase):
+    password: str  
+
+# For returning user data (output)
 class UserRead(UserBase):
     id: int
 
+    class Config:
+        orm_mode = True  
 
+# For login
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
