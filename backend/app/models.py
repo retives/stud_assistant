@@ -32,5 +32,5 @@ class Conversation(Base):
 
     id = Column(Integer, primary_key = True)
     title = Column(String(100))
-    owner_id = Column(Integer, ForeignKey('users..id'))
+    owner_id = Column(Integer, ForeignKey('users.id'))
     
