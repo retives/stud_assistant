@@ -6,13 +6,14 @@ from app.database import db_dependency
 from app.schemas import UserLogin, UserRead, UserCreate
 from app.models import User
 from app.database import get_db
-from app.security import verify_password, hash_password, create_access_token
+from app.security import verify_password, hash_password, create_access_token, is_password_strong
 from app.schemas import Token
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 # Router for auth module
 router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
 # Authentication for login
 def authenticate_user(username:str, password:str, db):
     user = db.query(User).filter(User.username == username).first()
@@ -29,14 +30,44 @@ def authenticate_user(username:str, password:str, db):
             headers={"WWW-Authenticate": "Bearer"},
         )
     return user
-# current user
-# !!! import oauth2 scheme !!!
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    pass
-@router.post('/signup')
-async def register_user(user_request: UserCreate):
 
-    user = UserCreate(
+def get_user(db, username: str):
+    if username in db:
+        user_dict = db[username]
+        return User(**user_dict)
+    
+# current user
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = create_access_token(token)
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+    except Exception:
+        raise credentials_exception
+    user = get_user(username=username)
+    if user is None:
+        raise credentials_exception
+    return user
+
+# Register
+@router.post('/signup')
+async def register_user(user_request: UserCreate, db: db_dependency): # type: ignore
+    # Password validation
+    password = user_request.password
+
+    if not is_password_strong(password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password is not strong enough. It must be at least 8 characters long and include uppercase letters, lowercase letters, numbers, and special characters.",
+        )
+    # User for DB
+    user = User(
         username = user_request.username,
         email = user_request.email,
         password = hash_password(user_request.password),
@@ -44,34 +75,45 @@ async def register_user(user_request: UserCreate):
         is_verified = True,
         is_superuser = False
     )
+    # DB actions
     db.add(user)
     db.commit()
+    db.refresh(user)
 
-# Login
-@router.post('/token', status_code = status.HTTP_200_OK)
-async def login_for_access_token(user_request: UserCreate, db:db_dependency):
-    user = authenticate_user(user_request.username, user_request.password, db)
-    
+    # Login logic
     token = create_access_token(
         data = {'username': user.username, 'id': user.id, 'email': user.email}
         )
-    # Errors
+    return Token(access_token = token, token_type = 'bearer')
+# Login
+@router.post('/token',response_model=Token)
+async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db:db_dependency): # type: ignore
+    # User model
+    user = authenticate_user(form_data.username, form_data.password, db)
+    # Token creation
+    token = create_access_token(
+        data = {'username': user.username, 'id': user.id, 'email': user.email}
+        )
     return Token(access_token = token, token_type = 'bearer')
 
-    
+# Logout
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(response: Response):
+    response.delete_cookie("access_token")
+    return response    
 
-
+# Temp routes
 
 @router.delete('/delete-account', status_code=status.HTTP_200_OK)
-async def delete_user(db: db_dependency, user_id: str):
+async def delete_user(db: db_dependency, user_id: str): # type: ignore
     db.delete(User.id == user_id)
 
 
 @router.get('/list-users', status_code=status.HTTP_200_OK)
-async def list_users(db: db_dependency):
+async def list_users(db: db_dependency): # type: ignore
     return db.query(User).all()
 
 @router.get('/user/{user_id}', status_code=status.HTTP_200_OK)
-async def get_user(db: db_dependency, user_id: str):
+async def get_user(db: db_dependency, user_id: str): # type: ignore
     return db.query(User).filter(User.id == user_id).first()
 

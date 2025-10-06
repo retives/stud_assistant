@@ -3,5 +3,5 @@ from dotenv import load_dotenv
 
 # in seconds
 TOKEN_EXPIRE_TIME = 3600
-SECRET_KEY = load_dotenv('SECRET_KEY')
+SECRET_KEY = str(load_dotenv('SECRET_KEY'))
 ALGORITHM = 'HS256'

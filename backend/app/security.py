@@ -1,5 +1,5 @@
 from passlib.context import CryptContext
-from datetime import timedelta
+from datetime import timedelta, datetime
 from app.config import TOKEN_EXPIRE_TIME, SECRET_KEY, ALGORITHM
 import jwt
 # Password generation context
@@ -29,7 +29,7 @@ def is_password_strong(password: str) -> bool:
 def create_access_token(data:dict, expires_delta: timedelta = TOKEN_EXPIRE_TIME):
     to_encode = data.copy()
 
-    expire_time = datetime.now() + expires_delta
+    expire_time = datetime.now() + timedelta(seconds=expires_delta)
 
     to_encode.update({'exp': expire_time})
     
