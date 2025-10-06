@@ -1,13 +1,17 @@
 from passlib.context import CryptContext
+from dotnev import load_dotenv
 
+# Password generation context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# Hashing
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
-
+# Veirfication against actual an hashed stored password
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
+# Password strongness verification
 def is_password_strong(password: str) -> bool:
     if len(password) < 8:
         return False

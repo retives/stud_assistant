@@ -15,12 +15,11 @@ SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 # user_router
 router = APIRouter()
 
+# Table creation
 def create_tables():
     Base.metadata.create_all(engine)
 
-if __name__ == "__main__":
-    create_tables()
-
+# Session creation
 def get_db():
     db = SessionLocal()
     try:
@@ -28,6 +27,8 @@ def get_db():
     finally:
         db.close()
 
+# Input type for routes to ensure the integrity
 db_dependency = Annotated[Session, Depends(get_db)]
+
 if __name__ == '__main__':
     create_tables()

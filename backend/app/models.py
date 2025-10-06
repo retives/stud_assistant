@@ -4,6 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 # Empty base for models
 Base = declarative_base()
 
+# User model
 class User(Base):
     __tablename__ = 'users'
     
@@ -18,7 +19,8 @@ class User(Base):
     def __repr__(self):
         return f"<User(username='{self.username}', email='{self.email}')>"
 
-
+# Message model
+# Foreign key to conversation
 class Message(Base):
     __tablename__ = 'messages'
 
@@ -26,7 +28,8 @@ class Message(Base):
     content = Column(String)
     date = Column(DateTime)
     conversation_id = Column(Integer, ForeignKey('conversations.id'))
-
+# Conversation model 
+# Foreign key to user
 class Conversation(Base):
     __tablename__ = 'conversations'
 
