@@ -6,43 +6,61 @@ from app.database import db_dependency
 from app.schemas import UserLogin, UserRead, UserCreate
 from app.models import User
 from app.database import get_db
-from app.security import verify_password, hash_password
+from app.security import verify_password, hash_password, create_access_token
+from app.schemas import Token
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+# Router for auth module
 router = APIRouter()
 
-def authenticate_user(username:str, password:str):
-    user = User.filter(User.username == username).first()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+# Authentication for login
+def authenticate_user(username:str, password:str, db):
+    user = db.query(User).filter(User.username == username).first()
     if not user:
-        return HTTPException(status_code = 422, detail="Username doesn't exist")
-    if not verify_password(password):
-        return HTTPException(status_code = 422, detail="Password is incorrect")
-    return Response(status_code = 200, detail = "Successful login")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    if not verify_password(password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user
+# current user
+# !!! import oauth2 scheme !!!
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+    pass
 @router.post('/signup')
-def register_user(user_request: UserCreate):
+async def register_user(user_request: UserCreate):
+
     user = UserCreate(
         username = user_request.username,
         email = user_request.email,
-        password = user_request.password,
-        is_active = user_request.is_active
+        password = hash_password(user_request.password),
+        is_active = user_request.is_active,
+        is_verified = True,
+        is_superuser = False
     )
+    db.add(user)
+    db.commit()
 
+# Login
+@router.post('/token', status_code = status.HTTP_200_OK)
+async def login_for_access_token(user_request: UserCreate, db:db_dependency):
+    user = authenticate_user(user_request.username, user_request.password, db)
+    
+    token = create_access_token(
+        data = {'username': user.username, 'id': user.id, 'email': user.email}
+        )
     # Errors
-    return {"error": "Invalid data"}
+    return Token(access_token = token, token_type = 'bearer')
 
-@router.post('/login', status_code = statuc.HTTP_200_OK)
-def login_user(user_request: UserCreate, db = db_dependency):
     
 
 
-    # Errors
-    return {"error": "Invalid data"}
-
-@router.post('/create-user', status_code=status.HTTP_201_CREATED)
-def create_user(db: db_dependency, user_request: UserCreate):
-    user_model = User(**user_request.dict())
-    db.add(user_model)
-    db.commit()
-    # Errors
-    return {"error": "Invalid data"}
 
 @router.delete('/delete-account', status_code=status.HTTP_200_OK)
 async def delete_user(db: db_dependency, user_id: str):
@@ -56,3 +74,4 @@ async def list_users(db: db_dependency):
 @router.get('/user/{user_id}', status_code=status.HTTP_200_OK)
 async def get_user(db: db_dependency, user_id: str):
     return db.query(User).filter(User.id == user_id).first()
+

@@ -1,6 +1,7 @@
 from passlib.context import CryptContext
-from dotnev import load_dotenv
-
+from datetime import timedelta
+from app.config import TOKEN_EXPIRE_TIME, SECRET_KEY, ALGORITHM
+import jwt
 # Password generation context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -24,3 +25,14 @@ def is_password_strong(password: str) -> bool:
     if not any(char in "!@#$%^&*()-_=+[]{}|;:'\",.<>?/`~" for char in password):
         return False
     return True
+
+def create_access_token(data:dict, expires_delta: timedelta = TOKEN_EXPIRE_TIME):
+    to_encode = data.copy()
+
+    expire_time = datetime.now() + expires_delta
+
+    to_encode.update({'exp': expire_time})
+    
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm = ALGORITHM)
+    return encoded_jwt
+
