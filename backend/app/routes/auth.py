@@ -75,6 +75,7 @@ async def register_user(user_request: UserCreate, db: db_dependency): # type: ig
         is_verified = True,
         is_superuser = False
     )
+    
     # DB actions
     db.add(user)
     db.commit()
@@ -85,7 +86,8 @@ async def register_user(user_request: UserCreate, db: db_dependency): # type: ig
         data = {'username': user.username, 'id': user.id, 'email': user.email}
         )
     return Token(access_token = token, token_type = 'bearer')
-# Login
+
+# Login 
 @router.post('/token',response_model=Token)
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db:db_dependency): # type: ignore
     # User model

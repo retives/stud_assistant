@@ -3,7 +3,7 @@ from datetime import timedelta, datetime
 from app.config import TOKEN_EXPIRE_TIME, SECRET_KEY, ALGORITHM
 import jwt
 # Password generation context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 # Hashing
 def hash_password(password: str) -> str:

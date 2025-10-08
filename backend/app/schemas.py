@@ -20,7 +20,7 @@ class UserRead(UserBase):
 
 # For login
 class UserLogin(BaseModel):
-    email: EmailStr
+    username: str
     password: str
 
 class Token(BaseModel):
