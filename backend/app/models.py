@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 # Empty base for models
 Base = declarative_base()
@@ -36,4 +36,5 @@ class Conversation(Base):
     id = Column(Integer, primary_key = True)
     title = Column(String(100))
     owner_id = Column(Integer, ForeignKey('users.id'))
+    date_changed = Column(DateTime)
     

@@ -2,7 +2,7 @@ from fastapi import FastAPI, Response, Request
 from fastapi.responses import JSONResponse
 from app.routes import auth
 from fastapi.middleware.cors import CORSMiddleware
-from . import database
+
 
 # Main app instance
 app = FastAPI()
@@ -24,7 +24,6 @@ app.add_middleware(
 
 # Routes
 app.include_router(auth.router)
-app.include_router(database.router)
 
 # Index route
 @app.get('/')

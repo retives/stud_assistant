@@ -1,0 +1,6 @@
+[project]
+name = "stud_assistant"
+version = "0.1.0"
+
+[tool.setuptools]
+packages = ["app"]

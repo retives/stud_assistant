@@ -6,9 +6,10 @@ from app.database import db_dependency
 from app.schemas import UserLogin, UserRead, UserCreate
 from app.models import User
 from app.database import get_db
-from app.security import verify_password, hash_password, create_access_token, is_password_strong
+from app.security import verify_password, hash_password, create_access_token, is_password_strong, read_access_token
 from app.schemas import Token
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
 # Router for auth module
 router = APIRouter()
 
@@ -31,26 +32,26 @@ def authenticate_user(username:str, password:str, db):
         )
     return user
 
-def get_user(db, username: str):
-    if username in db:
-        user_dict = db[username]
-        return User(**user_dict)
+def get_user_by_username(username: str, db):
+    return db.query(User).filter(User.username == username).first()
     
 # current user
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: db_dependency): # type: ignore
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = create_access_token(token)
-        username: str = payload.get("sub")
+        
+        payload = read_access_token(token)
+        print(payload)
+        username: str = payload.get("username")
         if username is None:
             raise credentials_exception
     except Exception:
         raise credentials_exception
-    user = get_user(username=username)
+    user = get_user_by_username(username=username, db=db)
     if user is None:
         raise credentials_exception
     return user
@@ -119,3 +120,6 @@ async def list_users(db: db_dependency): # type: ignore
 async def get_user(db: db_dependency, user_id: str): # type: ignore
     return db.query(User).filter(User.id == user_id).first()
 
+@router.get('/users/me', response_model=UserRead)
+async def read_users_me(current_user: Annotated[User, Depends(get_current_user)], db: db_dependency): # type: ignore
+    return current_user
