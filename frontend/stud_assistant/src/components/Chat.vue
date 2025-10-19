@@ -15,50 +15,31 @@
 </template>
 
 <script>
-import axios from "axios";
-
+import axios, { get } from "axios";
+import { getToken } from "@/utils/localStorage";
+import { readJWT } from "@/utils/jwt";
 export default {
-  name: "SimpleChat",
-  data() {
-    return {  
-      messages: [
-        {"role":"system", "content":"Be a helpful assistant for students, find the info on university's website and read the timetable"},
-        {"role":"user", "content":"Where is the Faculty of Computer Science in the IFNTUOG"},
-        {"role":"assistant", "content":"Got it! The Faculty of Computer Science of Ivano-Frankivsk National Technical University of Oil and Gas is located at Berehova Street."}
-      ],
-      input: "",
-      apiEndpoint: "https://localhost:11434",
-      apiKey: "",
-      model: "qwen2.5:latest",
-      
-    };
-  },
-  mounted() {
-    axios.get('http://localhost:8000/')
-      .then(response => {
-        this.apiKey = response.data.apikey;
-      })
-      .catch(error => {
-        console.error("Error fetching API key:", error);
-      });
-  },
   methods: {
     // Request method to the LLM
     async sendMessage() {
       if (!this.input.trim()) return;
-      const userMsg = { role: "user", content: this.input };
+      token = getToken();
+      const payload = readJWT(token);
+      // Change the conversation id when implementing multiple conversations
+      const userMsg = { sender_name: payload.username, content: this.input, sender_id: payload.user_id, conversation_id: 1 };
       this.messages.push(userMsg);
       const inputCopy = this.input;
       this.input = "";
 
       try {
-        const res = await fetch(this.apiEndpoint, {
+        const res = await axios.post( {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${this.apiKey}`,
+            Authorization: `Bearer ${getToken()}`,
           },
-          body: JSON.stringify({ model: this.model, messages: this.messages }),
+          url: "http://localhost:8000/chat/send-message",
+          data: JSON.stringify({ message_data: inputCopy }),
         });
         const data = await res.json();
         const reply = data.choices?.[0]?.message?.content || "[No response]";
