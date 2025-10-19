@@ -39,7 +39,6 @@
 <script>
 import axios from "axios";
 import { setToken } from "@/utils/localStorage";
-
 export default {
   name: "LoginPage",
   data() {
