@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Response, Request
 from fastapi.responses import JSONResponse
-from app.routes import auth
+from app.routes import auth, chat
 from fastapi.middleware.cors import CORSMiddleware
 
 
@@ -24,7 +24,7 @@ app.add_middleware(
 
 # Routes
 app.include_router(auth.router)
-
+app.include_router(chat.router)
 # Index route
 @app.get('/')
 def start_page():
