@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 from app.database import db_dependency
 from app.schemas import ConversationNew, ConversationRead
 from app.models import Conversation
@@ -26,8 +27,9 @@ def create_conversation(conversation: ConversationNew, db: db_dependency):
     db.add(new_conv)
     db.commit()
     return new_conv
-# response_model=List[ConversationRead]
-@router.get('/conversations')
+
+# 
+@router.get('/conversations', response_model=List[ConversationRead])
 def get_user_conversations(db: db_dependency, current_user = Depends(get_current_user)):
     conversations = (
     db.query(Conversation)
@@ -36,3 +38,19 @@ def get_user_conversations(db: db_dependency, current_user = Depends(get_current
     .all()
     )
     return conversations
+
+@router.delete('/delete')
+async def delete_conversation(db: db_dependency, current_user = Depends(get_current_user), conversation_to_delete = ConversationNew):
+    chat_to_delete = (db.query(Conversation)
+                      .filter(Conversation.owner_id == current_user.id, Conversation.id == chat_to_delete.id)
+                      )
+    if chat_to_delete:
+        try:
+            db.delete(chat_to_delete)
+            db.commit()
+        except HTTPException:
+            pass
+    return JSONResponse(
+        content='Deleted successfully',
+        status_code=status.HTTP_201_CREATED 
+    )
