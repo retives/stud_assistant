@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Response, Depends, Path, HTTPException
-from uuid import UUID
+from uuid import UUID, uuid5
+import uuid
 from typing import Annotated
 from starlette import status
 from app.database import db_dependency
@@ -10,6 +11,7 @@ from app.security import verify_password, hash_password, create_access_token, is
 from app.schemas import Token
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+
 # Router for auth module
 router = APIRouter()
 
@@ -69,6 +71,7 @@ async def register_user(user_request: UserCreate, db: db_dependency): # type: ig
         )
     # User for DB
     user = User(
+        id = str(uuid5(uuid.NAMESPACE_URL, 'http://localhost:8000')),
         username = user_request.username,
         email = user_request.email,
         password = hash_password(user_request.password),

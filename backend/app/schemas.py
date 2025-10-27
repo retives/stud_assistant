@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from uuid import UUID
-from datetime import datetime as timestamp
+from datetime import datetime
 # Shared properties
 class UserBase(BaseModel):
     email: EmailStr = Field(min_length=5, max_length=120)
@@ -32,19 +32,25 @@ class TokenData(BaseModel):
     username: str | None = None
 
 # Conversation schema
-class Conversation(BaseModel):
-    title: str = Field(min_length=1, max_length=100)
-    owner_id: int
-# Message schemas
-
-class MessageSave(BaseModel):
+class ConversationBase(BaseModel):
+    owner_id: UUID
+class ConversationNew(ConversationBase):
+    pass 
+class ConversationRead(ConversationBase):
     id: UUID
-    content: str
-    conversation_id: int
-    date: timestamp
+    title: str
+    date_changed: datetime
 
-class MessageSend(BaseModel):
+    class Config:
+        from_attributes = True
+
+# Message schemas
+class MessageBase(BaseModel):
     content: str
+    conversation_id: UUID
     sender_id: UUID
-    conversation_id: int
+
+class MessageSave(MessageBase):
+    date: datetime
+    
     
