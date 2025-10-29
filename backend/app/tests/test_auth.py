@@ -32,5 +32,4 @@ def test_current_user():
 
 
 
-    
 

@@ -5,15 +5,11 @@ from app.schemas import ConversationNew, ConversationRead
 from app.models import Conversation
 from typing import List
 from app.routes.auth import get_current_user
-from uuid import UUID, uuid5
+from uuid import UUID, uuid4
 import uuid
 from datetime import datetime
 router = APIRouter()
 
-@router.post('/send-message')
-def send_mesasge(message_data: str, db: db_dependency): # type: ignore
-    pass
-    
 @router.post('/new-conversation')
 def create_conversation(conversation: ConversationNew, db: db_dependency):
     
@@ -21,7 +17,7 @@ def create_conversation(conversation: ConversationNew, db: db_dependency):
     new_conv = Conversation(
         title='New chat',
         owner_id = conversation.owner_id,
-        id = uuid5(uuid.NAMESPACE_URL, 'http://localhost:8000'),
+        id = str(uuid4()),
         date_changed=datetime.now()
     )
     db.add(new_conv)
@@ -40,7 +36,7 @@ def get_user_conversations(db: db_dependency, current_user = Depends(get_current
     return conversations
 
 @router.delete('/delete')
-async def delete_conversation(db: db_dependency, current_user = Depends(get_current_user), conversation_to_delete = ConversationNew):
+async def delete_conversation(db: db_dependency, current_user = Depends(get_current_user), chat_to_delete = ConversationNew):
     chat_to_delete = (db.query(Conversation)
                       .filter(Conversation.owner_id == current_user.id, Conversation.id == chat_to_delete.id)
                       )
@@ -54,3 +50,16 @@ async def delete_conversation(db: db_dependency, current_user = Depends(get_curr
         content='Deleted successfully',
         status_code=status.HTTP_201_CREATED 
     )
+
+@router.get('/conversations/{conversation_id}')
+async def get_conversation(conversation_id:str, db:db_dependency, current_user = Depends(get_current_user)):
+
+    conv_to_open = (db.query(Conversation)
+    .filter(Conversation.id == conversation_id, Conversation.owner_id == current_user.id)
+    .first()
+    )
+    if not conv_to_open:
+        raise HTTPException(status_code=404)
+    print(conv_to_open)
+    return ConversationRead(*conv_to_open)
+

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Response, Depends, Path, HTTPException
-from uuid import UUID, uuid5
+from uuid import UUID, uuid4
 import uuid
 from typing import Annotated
 from starlette import status
@@ -71,7 +71,7 @@ async def register_user(user_request: UserCreate, db: db_dependency): # type: ig
         )
     # User for DB
     user = User(
-        id = str(uuid5(uuid.NAMESPACE_URL, 'http://localhost:8000')),
+        id = str(uuid4()),
         username = user_request.username,
         email = user_request.email,
         password = hash_password(user_request.password),
@@ -87,7 +87,7 @@ async def register_user(user_request: UserCreate, db: db_dependency): # type: ig
 
     # Login logic
     token = create_access_token(
-        data = {'username': user.username, 'id': user.id, 'email': user.email}
+        data = {'username': user.username, 'id': str(user.id), 'email': user.email}
         )
     return Token(access_token = token, token_type = 'bearer')
 

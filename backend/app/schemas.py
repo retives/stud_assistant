@@ -41,8 +41,7 @@ class ConversationRead(ConversationBase):
     title: str
     date_changed: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Message schemas
 class MessageBase(BaseModel):
@@ -50,7 +49,12 @@ class MessageBase(BaseModel):
     conversation_id: UUID
     sender_id: UUID
 
+class MessageSend(MessageBase):
+    pass
+
 class MessageSave(MessageBase):
     date: datetime
+
+
     
     
