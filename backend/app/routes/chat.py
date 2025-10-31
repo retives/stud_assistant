@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime, timezone
 router = APIRouter()
 
-@router.post('/new-conversation')
+@router.post('/conversations/new-conversation')
 def create_conversation(db: db_dependency, current_user = Depends(get_current_user)):
     # Create conversation in db
     new_conv = Conversation(
@@ -34,7 +34,7 @@ def get_user_conversations(db: db_dependency, current_user = Depends(get_current
     )
     return conversations
 
-@router.delete('/delete')
+@router.delete('/conversations/delete')
 async def delete_conversation(db: db_dependency, current_user = Depends(get_current_user), chat_to_delete = ConversationNew):
     chat_to_delete = (db.query(Conversation)
                       .filter(Conversation.owner_id == current_user.id, Conversation.id == chat_to_delete.id)
@@ -112,3 +112,6 @@ async def send_message(conversation_id:str, message_content:str, db:db_dependenc
     db.commit()
     db.refresh(new_message)
     return new_message
+
+
+

@@ -17,7 +17,7 @@ router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-def get_user_by_username(username: str, db: db_dependency = None) -> User:
+def get_user_by_username(username: str, db) -> User:
     return db.query(User).filter(User.username == username).first()
     
 # Authentication for login
@@ -114,7 +114,11 @@ def logout(response: Response):
 # Temp routes
 @router.delete('/delete-account', status_code=status.HTTP_200_OK)
 async def delete_user(db: db_dependency, user_id: str, current_user: Annotated[User, Depends(get_current_user)]): # type: ignore
-    db.delete(User.id == user_id)
+    user_to_delete = db.query(User).filter(User.id == user_id).first()
+    if user_to_delete:
+        db.delete(user_to_delete)
+        db.commit()
+    return {"message": "User deleted successfully"}
 
 
 @router.get('/list-users', status_code=status.HTTP_200_OK)
