@@ -54,9 +54,9 @@ class MessageSend(MessageBase):
 
 class MessageSave(MessageBase):
     date: datetime
-    model_config = ConfigDict(from_attributes=True)
+
 class ConversationMessages(BaseModel):
     conversation: ConversationRead
-    messages: list[MessageSave] | None = None
+    messages: list[MessageSave]
     
     

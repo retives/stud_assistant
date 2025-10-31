@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from app.database import db_dependency
-from app.schemas import ConversationNew, ConversationRead, ConversationMessages,MessageSave
+from app.schemas import ConversationNew, ConversationRead
 from app.models import Conversation, Message
 from typing import List
 from app.routes.auth import get_current_user
@@ -10,12 +10,14 @@ import uuid
 from datetime import datetime, timezone
 router = APIRouter()
 
-@router.post('/conversations/new-conversation')
-def create_conversation(db: db_dependency, current_user = Depends(get_current_user)):
+@router.post('/new-conversation')
+def create_conversation(conversation: ConversationNew, db: db_dependency, current_user = Depends(get_current_user)):
+    if str(conversation.owner_id) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="You can only create conversations for yourself.")
     # Create conversation in db
     new_conv = Conversation(
         title='New chat',
-        owner_id = str(current_user.id),
+        owner_id = str(conversation.owner_id),
         id = str(uuid4()),
         date_changed=datetime.now(timezone.utc).replace(microsecond=0)
     )
@@ -34,7 +36,7 @@ def get_user_conversations(db: db_dependency, current_user = Depends(get_current
     )
     return conversations
 
-@router.delete('/conversations/delete')
+@router.delete('/delete')
 async def delete_conversation(db: db_dependency, current_user = Depends(get_current_user), chat_to_delete = ConversationNew):
     chat_to_delete = (db.query(Conversation)
                       .filter(Conversation.owner_id == current_user.id, Conversation.id == chat_to_delete.id)
@@ -50,7 +52,7 @@ async def delete_conversation(db: db_dependency, current_user = Depends(get_curr
         status_code=status.HTTP_201_CREATED 
     )
 
-@router.get('/conversations/{conversation_id}', response_model=ConversationMessages)
+@router.get('/conversations/{conversation_id}')
 async def get_conversation(conversation_id:str, db:db_dependency, current_user = Depends(get_current_user)):
     # Conversation fromthe database
     conv_to_open = (db.query(Conversation)
@@ -63,21 +65,14 @@ async def get_conversation(conversation_id:str, db:db_dependency, current_user =
     # Get the messages
     messages = (db.query(Message)
     .filter(Message.conversation_id == conversation_id))
-
-    message_list = [MessageSave.model_validate(msg) for msg in messages]
-
-    conv_messages = ConversationMessages(
-        conversation= ConversationRead.model_validate(conv_to_open),
-        messages=message_list
-    )
-    return conv_messages
+    return ConversationRead(*conv_to_open)
 
 
 @router.put('/conversations/{conversation_id}')
 async def update_conversation(conversation_id:str, updated_conversation:ConversationNew, 
                               db: db_dependency, current_user = Depends(get_current_user)):
     conv_to_update = (db.query(Conversation)
-    .filter(Conversation.id == conversation_id, Conversation.owner_id == current_user.id)
+    .filter(Conversation.id == conversation_id)
     .first()
     )
     if not conv_to_update:
@@ -89,29 +84,4 @@ async def update_conversation(conversation_id:str, updated_conversation:Conversa
     db.refresh(conv_to_update)
     
     return conv_to_update
-
-@router.post('/conversations/{conversation_id}/send_message', response_model=MessageSave)
-async def send_message(conversation_id:str, message_content:str, db:db_dependency, current_user = Depends(get_current_user)):
-    conv = (db.query(Conversation)
-    .filter(Conversation.id == conversation_id, Conversation.owner_id == current_user.id)
-    .first()
-    )
-    if not conv:
-        raise HTTPException(status_code=404)
-    
-    new_message = Message(
-        id = str(uuid4()),
-        content = message_content,
-        date = datetime.now(timezone.utc).replace(microsecond=0),
-        conversation_id = conversation_id,
-        sender_id = str(current_user.id)
-    )
-
-    db.add(new_message)
-    conv.date_changed = datetime.now(timezone.utc).replace(microsecond=0)
-    db.commit()
-    db.refresh(new_message)
-    return new_message
-
-
 

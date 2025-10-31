@@ -27,6 +27,7 @@ node_modules/
 dist/
 dist-ssr/
 coverage/
+stud_assistant.egg-info/
 
 # Environment files
 *.local
@@ -57,3 +58,6 @@ Thumbs.db
 
 package.json
 package-lock.json
+
+
+*.coverage
