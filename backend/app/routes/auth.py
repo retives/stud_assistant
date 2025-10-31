@@ -17,26 +17,27 @@ router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+def get_user_by_username(username: str, db) -> User:
+    return db.query(User).filter(User.username == username).first()
+    
 # Authentication for login
-def authenticate_user(username:str, password:str, db):
-    user = db.query(User).filter(User.username == username).first()
-    if not user:
+def authenticate_user(username:str, password:str, db) -> User:
+    db_user = get_user_by_username(username)
+    if not db_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    if not verify_password(password, user.password):
+    if not verify_password(password, db_user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return user
+    return db_user
 
-def get_user_by_username(username: str, db):
-    return db.query(User).filter(User.username == username).first()
-    
+
 # current user
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: db_dependency): # type: ignore
     credentials_exception = HTTPException(
@@ -53,7 +54,9 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: db
             raise credentials_exception
     except Exception:
         raise credentials_exception
+    
     user = get_user_by_username(username=username, db=db)
+    
     if user is None:
         raise credentials_exception
     return user
@@ -109,18 +112,17 @@ def logout(response: Response):
     return response    
 
 # Temp routes
-
 @router.delete('/delete-account', status_code=status.HTTP_200_OK)
-async def delete_user(db: db_dependency, user_id: str): # type: ignore
+async def delete_user(db: db_dependency, user_id: str, current_user: Annotated[User, Depends(get_current_user)]): # type: ignore
     db.delete(User.id == user_id)
 
 
 @router.get('/list-users', status_code=status.HTTP_200_OK)
-async def list_users(db: db_dependency): # type: ignore
+async def list_users(db: db_dependency, current_user: Annotated[User, Depends(get_current_user)]): # type: ignore
     return db.query(User).all()
 
 @router.get('/user/{user_id}', status_code=status.HTTP_200_OK)
-async def get_user(db: db_dependency, user_id: str): # type: ignore
+async def get_user(db: db_dependency, user_id: str, current_user: Annotated[User, Depends(get_current_user)]): # type: ignore
     return db.query(User).filter(User.id == user_id).first()
 
 @router.get('/users/me', response_model=UserRead)
