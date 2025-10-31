@@ -7,18 +7,19 @@ from typing import List
 from app.routes.auth import get_current_user
 from uuid import UUID, uuid4
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 router = APIRouter()
 
 @router.post('/new-conversation')
-def create_conversation(conversation: ConversationNew, db: db_dependency):
-    
+def create_conversation(conversation: ConversationNew, db: db_dependency, current_user = Depends(get_current_user)):
+    if str(conversation.owner_id) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="You can only create conversations for yourself.")
     # Create conversation in db
     new_conv = Conversation(
         title='New chat',
-        owner_id = conversation.owner_id,
+        owner_id = str(conversation.owner_id),
         id = str(uuid4()),
-        date_changed=datetime.now()
+        date_changed=datetime.now(timezone.utc).replace(microsecond=0)
     )
     db.add(new_conv)
     db.commit()
@@ -63,3 +64,18 @@ async def get_conversation(conversation_id:str, db:db_dependency, current_user =
     print(conv_to_open)
     return ConversationRead(*conv_to_open)
 
+@router.put('/conversations/{conversation_id}')
+async def update_conversation(conversation_id:str, updated_conversation:ConversationNew, db: db_dependency):
+    conv_to_update = (db.query(Conversation)
+    .filter(Conversation.id == conversation_id)
+    .first()
+    )
+    if not conv_to_update:
+        raise HTTPException(status_code=404)
+    
+    conv_to_update.title = updated_conversation.title
+    conv_to_update.date_changed = datetime.now(timezone.utc).replace(microsecond=0)
+    db.commit()
+    db.refresh(conv_to_update)
+    
+    return conv_to_update
