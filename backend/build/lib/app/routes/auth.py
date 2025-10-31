@@ -17,12 +17,12 @@ router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-def get_user_by_username(username: str, db: db_dependency = None) -> User:
+def get_user_by_username(username: str, db) -> User:
     return db.query(User).filter(User.username == username).first()
     
 # Authentication for login
-def authenticate_user(username:str, password:str, db: db_dependency) -> User:
-    db_user = get_user_by_username(username, db)
+def authenticate_user(username:str, password:str, db) -> User:
+    db_user = get_user_by_username(username)
     if not db_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

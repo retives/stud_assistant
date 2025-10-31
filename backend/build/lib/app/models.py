@@ -26,9 +26,7 @@ class Message(Base):
     id = Column(UUID, primary_key = True)
     content = Column(String)
     date = Column(DateTime)
-    sender_id = Column(UUID, ForeignKey('users.id'))
     conversation_id = Column(UUID, ForeignKey('conversations.id'))
-    
 # Conversation model 
 # Foreign key to user
 class Conversation(Base):
