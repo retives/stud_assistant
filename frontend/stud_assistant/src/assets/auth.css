@@ -1,0 +1,83 @@
+.auth-page {
+  max-width: 400px;
+  margin: 60px auto;
+  padding: 24px;
+  background: #1e1e2f;
+  border-radius: 12px;
+  color: #e0e0e0;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  font-family: 'Inter', sans-serif;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.input-group input {
+  background: #2a2a3d;
+  color: #e0e0e0;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+.input-group input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #4ade80;
+}
+
+.input-group input.error {
+  border: 1px solid #f87171;
+}
+
+button {
+  background: #4ade80;
+  color: #012;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #22d3ee;
+}
+
+.error-msg {
+  color: #f87171;
+  font-size: 0.9rem;
+}
+
+.server {
+  text-align: center;
+}
+
+.links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+a, .links router-link {
+  color: #22d3ee;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+a:hover, .links router-link:hover {
+  text-decoration: underline;
+}
