@@ -31,12 +31,4 @@ def get_db():
 db_dependency = Annotated[Session, Depends(get_db)]
 
 if __name__ == '__main__':
-    print(Base.metadata.tables.keys())
-    from app.models import Base, Message
-    print(Base.metadata.tables.keys())
-    print(Message.__table__.columns.keys())
-    import app.models
-    print(app.models.__file__)
-
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
+    create_tables()

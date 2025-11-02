@@ -10,7 +10,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHashHistory('/stud-assistant'), // <--- hash-based routing
+  history: createWebHashHistory('/stud-assistant'),
   routes
 })
 

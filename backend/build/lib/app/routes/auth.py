@@ -21,8 +21,8 @@ def get_user_by_username(username: str, db) -> User:
     return db.query(User).filter(User.username == username).first()
     
 # Authentication for login
-def authenticate_user(username:str, password:str, db: db_dependency) -> User:
-    db_user = get_user_by_username(username, db)
+def authenticate_user(username:str, password:str, db) -> User:
+    db_user = get_user_by_username(username)
     if not db_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -114,11 +114,7 @@ def logout(response: Response):
 # Temp routes
 @router.delete('/delete-account', status_code=status.HTTP_200_OK)
 async def delete_user(db: db_dependency, user_id: str, current_user: Annotated[User, Depends(get_current_user)]): # type: ignore
-    user_to_delete = db.query(User).filter(User.id == user_id).first()
-    if user_to_delete:
-        db.delete(user_to_delete)
-        db.commit()
-    return {"message": "User deleted successfully"}
+    db.delete(User.id == user_id)
 
 
 @router.get('/list-users', status_code=status.HTTP_200_OK)
