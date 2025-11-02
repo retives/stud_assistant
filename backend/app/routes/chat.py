@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from app.database import db_dependency
-from app.schemas import ConversationNew, ConversationRead, ConversationMessages,MessageSave
+from app.schemas import ConversationNew, ConversationRead, ConversationMessages,MessageSave, ConversationUpdate
 from app.models import Conversation, Message
 from typing import List
 from app.routes.auth import get_current_user
@@ -74,10 +74,10 @@ async def get_conversation(conversation_id:str, db:db_dependency, current_user =
 
 
 @router.put('/conversations/{conversation_id}')
-async def update_conversation(conversation_id:str, updated_conversation:ConversationNew, 
+async def update_conversation(updated_conversation: ConversationUpdate,
                               db: db_dependency, current_user = Depends(get_current_user)):
     conv_to_update = (db.query(Conversation)
-    .filter(Conversation.id == conversation_id, Conversation.owner_id == current_user.id)
+    .filter(Conversation.id == updated_conversation.id, Conversation.owner_id == current_user.id)
     .first()
     )
     if not conv_to_update:
