@@ -75,7 +75,7 @@ six==1.17.0
 sniffio==1.3.1
 SQLAlchemy==2.0.43
 starlette==0.48.0
--e git+ssh://git@github.com/retives/stud_assistant.git@070332a8f8175e43219e81f6848ed83e6599f5fd#egg=stud_assistant&subdirectory=backend
+-e git+https://git@github.com/retives/stud_assistant.git@070332a8f8175e43219e81f6848ed83e6599f5fd#egg=stud_assistant&subdirectory=backend
 tomlkit==0.12.1
 trove-classifiers==2023.9.19
 typing-inspection==0.4.1
