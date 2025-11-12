@@ -26,7 +26,7 @@ def is_password_strong(password: str) -> bool:
         return False
     return True
 
-def create_access_token(data:dict, expires_delta: timedelta = TOKEN_EXPIRE_TIME):
+def create_access_token(data:dict, expires_delta = TOKEN_EXPIRE_TIME ):
     to_encode = data.copy()
 
     expire_time = datetime.now() + expires_delta
