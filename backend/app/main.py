@@ -1,9 +1,12 @@
 from fastapi import FastAPI, Response, Request
 from fastapi.responses import JSONResponse
+from sqlalchemy.orm import Session
+from app.config import SYSTEM_ID, SYSTEM_PASSWORD
+from app.database import SessionLocal
+from app.models import User
 from app.routes import auth, chat
 from fastapi.middleware.cors import CORSMiddleware
-
-
+from uuid import UUID
 # Main app instance
 app = FastAPI()
 
@@ -36,6 +39,25 @@ async def all_exception_handler(request: Request, exc: Exception):
         content={"detail": "Internal Server Error"}
     )
 
+@app.on_event("startup")
+def create_ai_user():
+    db: Session = SessionLocal()
+    try:
+        ai_user = db.query(User).filter_by(id=SYSTEM_ID).first()
+        if not ai_user:
+            ai_user = User(
+                id=SYSTEM_ID,
+                username="assistant",
+                password=SYSTEM_PASSWORD,
+                email='{SYSTEM_ID}@stud_assistant.com',
+            )
+            db.add(ai_user)
+            db.commit()
+            print("✅ AI user created")
+        else:
+            print("✅ AI user already exists")
+    finally:
+        db.close()
 
 
 if __name__ == "__main__":
