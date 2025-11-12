@@ -6,7 +6,9 @@ from app.models import Conversation, Message
 from typing import List
 from app.routes.auth import get_current_user
 from app.llm.agent import stud_agent
+from app.config import SYSTEM_ID
 from uuid import UUID, uuid4
+
 import uuid
 from datetime import datetime, timezone
 router = APIRouter()
@@ -119,26 +121,27 @@ async def send_message(conversation_id:str, message_content:str, db:db_dependenc
     stud_agent.update_user_info(courses, faculty, department, group)
     # Generating response
     response = stud_agent.ask(message_content)
-    print(response.content)
+    print(response)
     # Assigning title if needed
-    if not conv.title:
+    if conv.title == "New chat":
         new_title = stud_agent.get_title(message_content)
-        conv.title = new_title.content
+        conv.title = new_title
 
     message_from_ai = Message(
         id = str(uuid4()),
-        content = response.content,
+        content = response,
         date = datetime.now(timezone.utc).replace(microsecond=0),
         conversation_id = conversation_id,
-        sender_id = "00000000-0000-0000-0000-000000000001"
+        sender_id = SYSTEM_ID
     )
 
 
     db.add(new_message)
+    db.add(message_from_ai)
     conv.date_changed = datetime.now(timezone.utc).replace(microsecond=0)
     db.commit()
     db.refresh(new_message)
-    return new_message
+    return message_from_ai
 
 
 
