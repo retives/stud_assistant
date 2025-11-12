@@ -5,6 +5,7 @@ from app.schemas import ConversationNew, ConversationRead, ConversationMessages,
 from app.models import Conversation, Message
 from typing import List
 from app.routes.auth import get_current_user
+from app.llm.agent import stud_agent
 from uuid import UUID, uuid4
 import uuid
 from datetime import datetime, timezone
@@ -52,7 +53,7 @@ async def delete_conversation(db: db_dependency, current_user = Depends(get_curr
 
 @router.get('/conversations/{conversation_id}', response_model=ConversationMessages)
 async def get_conversation(conversation_id:str, db:db_dependency, current_user = Depends(get_current_user)):
-    # Conversation fromthe database
+    # Conversation from the database
     conv_to_open = (db.query(Conversation)
     .filter(Conversation.id == conversation_id, Conversation.owner_id == current_user.id)
     .first()
@@ -92,13 +93,14 @@ async def update_conversation(updated_conversation: ConversationUpdate,
 
 @router.post('/conversations/{conversation_id}/send_message', response_model=MessageSave)
 async def send_message(conversation_id:str, message_content:str, db:db_dependency, current_user = Depends(get_current_user)):
+    # Getting the conversation
     conv = (db.query(Conversation)
     .filter(Conversation.id == conversation_id, Conversation.owner_id == current_user.id)
     .first()
     )
     if not conv:
         raise HTTPException(status_code=404)
-    
+    # Forming a user's message model
     new_message = Message(
         id = str(uuid4()),
         content = message_content,
@@ -106,6 +108,31 @@ async def send_message(conversation_id:str, message_content:str, db:db_dependenc
         conversation_id = conversation_id,
         sender_id = str(current_user.id)
     )
+
+    # --- User data ---
+    courses = [''],
+    faculty = 'Факультет інформаційних технологій',
+    department = 'Інженерія програмного забезпечення',
+    group = 'ІП-22-1',
+
+    # Initializing student data
+    stud_agent.update_user_info(courses, faculty, department, group)
+    # Generating response
+    response = stud_agent.ask(message_content)
+    print(response.content)
+    # Assigning title if needed
+    if not conv.title:
+        new_title = stud_agent.get_title(message_content)
+        conv.title = new_title.content
+
+    message_from_ai = Message(
+        id = str(uuid4()),
+        content = response.content,
+        date = datetime.now(timezone.utc).replace(microsecond=0),
+        conversation_id = conversation_id,
+        sender_id = "00000000-0000-0000-0000-000000000001"
+    )
+
 
     db.add(new_message)
     conv.date_changed = datetime.now(timezone.utc).replace(microsecond=0)
