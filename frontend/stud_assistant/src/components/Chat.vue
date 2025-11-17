@@ -17,7 +17,7 @@
 <script>
 import axios, { get } from "axios";
 import { getToken } from "@/utils/localStorage";
-import { readJWT } from "@/utils/jwt";
+import { readJWT } from "@/utils/readJWT";
 export default {
   methods: {
     // Request method to the LLM
@@ -48,6 +48,7 @@ export default {
         console.error(e);
         this.messages.push({ role: "assistant", content: "Error calling API" });
       }
+      
     },
     async formRequestJson() {
       if (!this.input.trim()) return;
