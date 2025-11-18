@@ -67,7 +67,7 @@ export default {
       params.append('username', this.username);
       params.append('password', this.password);
       try {
-        const response = await axios.post("http://localhost:8000/token", params,{
+        const response = await axios.post("http://localhost:7000/token", params,{
           headers: {
             'Content-Type':'application/x-www-form-urlencoded'
           }});

@@ -42,7 +42,10 @@ class ConversationRead(ConversationBase):
     date_changed: datetime
 
     model_config = ConfigDict(from_attributes=True)
-
+    
+class ConversationUpdate(ConversationBase):
+    title: str
+    
 # Message schemas
 class MessageBase(BaseModel):
     content: str
@@ -55,6 +58,10 @@ class MessageSend(MessageBase):
 class MessageSave(MessageBase):
     date: datetime
     model_config = ConfigDict(from_attributes=True)
+
+class MessageCreate(BaseModel):
+    message_content: str
+
 class ConversationMessages(BaseModel):
     conversation: ConversationRead
     messages: list[MessageSave] | None = None
