@@ -2,7 +2,7 @@ from fastapi import FastAPI, Response, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from app.config import SYSTEM_ID, SYSTEM_PASSWORD
-from app.database import SessionLocal
+from app.database import SessionLocal, Base, engine
 from app.models import User
 from app.routes import auth, chat
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,8 +13,10 @@ app = FastAPI()
 # CORS handling
 # Origins of requests
 origins = [
-    "http://localhost:5173",   
+    "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:7070",
+    "http://127.0.0.1:7070",
 ]
 # Adding middleware
 app.add_middleware(
@@ -38,6 +40,11 @@ async def all_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"detail": "Internal Server Error"}
     )
+
+@app.on_event("startup")
+def on_startup():
+    Base.metadata.create_all(bind=engine)
+
 
 @app.on_event("startup")
 def create_ai_user():

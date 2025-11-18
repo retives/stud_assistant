@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from app.database import db_dependency
-from app.schemas import ConversationNew, ConversationRead, ConversationMessages,MessageSave, ConversationUpdate
+from app.schemas import ConversationNew, ConversationRead, ConversationMessages,MessageSave, ConversationUpdate, MessageCreate
 from app.models import Conversation, Message
 from typing import List
 from app.routes.auth import get_current_user
@@ -52,9 +52,17 @@ async def delete_conversation(db: db_dependency, current_user = Depends(get_curr
         content='Deleted successfully',
         status_code=status.HTTP_201_CREATED 
     )
-
+# Get covnersation details
 @router.get('/conversations/{conversation_id}', response_model=ConversationMessages)
-async def get_conversation(conversation_id:str, db:db_dependency, current_user = Depends(get_current_user)):
+async def get_conversation(conversation_id:str, 
+                           db:db_dependency, 
+                           current_user = Depends(get_current_user)
+                           ):
+    """
+    Input: 
+        - conversation_id: str - Query parameter
+        - body: None 
+    """
     # Conversation from the database
     conv_to_open = (db.query(Conversation)
     .filter(Conversation.id == conversation_id, Conversation.owner_id == current_user.id)
@@ -78,7 +86,16 @@ async def get_conversation(conversation_id:str, db:db_dependency, current_user =
 
 @router.put('/conversations/{conversation_id}')
 async def update_conversation(updated_conversation: ConversationUpdate,
-                              db: db_dependency, current_user = Depends(get_current_user)):
+                              db: db_dependency, 
+                              current_user = Depends(get_current_user)
+                              ):
+    """
+    Input:
+        - conversation_id: str - Query parameter
+        - body: ConversationUpdate(title)
+    Else is handled by FastAPI
+    """
+
     conv_to_update = (db.query(Conversation)
     .filter(Conversation.id == updated_conversation.id, Conversation.owner_id == current_user.id)
     .first()
@@ -93,8 +110,21 @@ async def update_conversation(updated_conversation: ConversationUpdate,
     
     return conv_to_update
 
-@router.post('/conversations/{conversation_id}/send_message', response_model=MessageSave)
-async def send_message(conversation_id:str, message_content:str, db:db_dependency, current_user = Depends(get_current_user)):
+# Send message
+@router.post('/conversations/{conversation_id}/sendmessage', response_model=MessageSave)
+async def send_message(
+    conversation_id:str, 
+    message_request: MessageCreate, 
+    db:db_dependency, 
+    current_user = Depends(get_current_user)
+    ):
+    """
+    Endpoint for sending a message
+    Input:
+        - conversation_id: str - Query parameter
+        - body: {MessageCreate(message_content)}
+    Else is handled by FastAPI
+    """
     # Getting the conversation
     conv = (db.query(Conversation)
     .filter(Conversation.id == conversation_id, Conversation.owner_id == current_user.id)
@@ -103,6 +133,8 @@ async def send_message(conversation_id:str, message_content:str, db:db_dependenc
     if not conv:
         raise HTTPException(status_code=404)
     # Forming a user's message model
+    message_content = message_request.message_content
+
     new_message = Message(
         id = str(uuid4()),
         content = message_content,
@@ -111,7 +143,7 @@ async def send_message(conversation_id:str, message_content:str, db:db_dependenc
         sender_id = str(current_user.id)
     )
 
-    # --- User data ---
+    # --- User data (remove later)---
     courses = [''],
     faculty = 'Факультет інформаційних технологій',
     department = 'Інженерія програмного забезпечення',
@@ -127,6 +159,7 @@ async def send_message(conversation_id:str, message_content:str, db:db_dependenc
         new_title = stud_agent.get_title(message_content)
         conv.title = new_title
 
+    # Save Ai message
     message_from_ai = Message(
         id = str(uuid4()),
         content = response,
