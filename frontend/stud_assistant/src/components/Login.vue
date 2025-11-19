@@ -74,6 +74,7 @@ export default {
 
         setToken(response.data.access_token);
         this.$router.push("/");
+        this.$forceUpdate();
       } catch (error) {
         if (error.response && error.response.status >= 500) {
           this.serverError = "Server error, please try again later.";
