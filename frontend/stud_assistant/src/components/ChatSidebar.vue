@@ -12,7 +12,7 @@
       <ul v-else>
         <li v-for="chat in sortedChats" :key="chat.id">
           <router-link :to="`/chat/${chat.id}`" class="chat-link" @click="$emit('update:visible', false)">
-            <div class="title">{{ chat.title || 'Untitled' }}</div>
+            <div class="title">{{ chat.title || 'Untitled' }} <button @click="deleteConversaiton(chat.conversation_id)">Remove</button></div>
             <div class="meta">{{ formatDate(chat.date_changed) }}</div>
           </router-link>
         </li>
@@ -29,7 +29,6 @@ const props = defineProps({
   chats: { type: Array, default: () => [] },
   visible: { type: Boolean, default: false }
 })
-
 const localChats = ref([])
 const loading = ref(false)
 const error = ref(null)
@@ -88,6 +87,29 @@ async function fetchConversations() {
   }
 }
 
+async function deleteConversaiton(conversationID) {
+  const token = getToken()
+  if (!token) return
+  loading.value = true
+  error.value = null
+  try {
+    const res = await fetch(`http://localhost:7000/conversations/${conversationID}/delete`,{
+      method: "DELETE",
+      headers: { 'Authorization': `Bearer ${token}` },
+      credentials: 'include'
+    })
+    if (!res.ok) {
+      throw new Error(`Server error: ${res.status}`)
+    }
+    await fetchConversations()
+
+  }catch (err) {
+    console.error('Failed to fetch conversations', err)
+    error.value = err.message || String(err)
+  } finally {
+    loading.value = false
+  }
+}
 onMounted(() => {
   // fetch if user is logged in
   fetchConversations()
