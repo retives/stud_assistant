@@ -27,21 +27,29 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { getToken } from '@/utils/localStorage'
 import { readJWT } from '@/utils/readJWT'
 
 const route = useRoute()
+const router = useRouter()
 const router = useRouter()
 const conversationId = ref(route.params.id || '1')
 
 const messages = ref([])
 const input = ref('')
 const loading = ref(true) 
+const loading = ref(true) 
 const sending = ref(false)
 const error = ref(null)
 const messagesContainer = ref(null)
 
 
+onMounted(()=>{
+  if (!readJWT()){
+    router.push("/login")
+  }
+})
 // Special sender ID for AI responses
 const ASSISTANT_SENDER_ID = '00000000-0000-0000-0000-000000000001'
 
