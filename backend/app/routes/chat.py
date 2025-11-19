@@ -53,7 +53,7 @@ def get_user_conversations(db: db_dependency,
     )
     return conversations
 
-@router.delete('/conversations/{conversation_id}delete')
+@router.delete('/conversations/{conversation_id}/delete')
 async def delete_conversation(db: db_dependency, 
                               conversation_id: str,
                               current_user = Depends(get_current_user), 

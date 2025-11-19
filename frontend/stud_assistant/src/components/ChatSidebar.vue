@@ -12,7 +12,7 @@
       <ul v-else>
         <li v-for="chat in sortedChats" :key="chat.id" class="chat-item">
           <router-link :to="`/chat/${chat.id}`" class="chat-link" @click="$emit('update:visible', false)">
-            <div class="title">{{ chat.title || 'Untitled' }}</div>
+            <div class="title">{{ chat.title || 'Untitled' }} <button @click="deleteConversaiton(chat.conversation_id)">Remove</button></div>
             <div class="meta">{{ formatDate(chat.date_changed) }}</div>
           </router-link>
           <div class="actions">
@@ -124,6 +124,29 @@ async function fetchConversations() {
   }
 }
 
+async function deleteConversaiton(conversationID) {
+  const token = getToken()
+  if (!token) return
+  loading.value = true
+  error.value = null
+  try {
+    const res = await fetch(`http://localhost:7000/conversations/${conversationID}/delete`,{
+      method: "DELETE",
+      headers: { 'Authorization': `Bearer ${token}` },
+      credentials: 'include'
+    })
+    if (!res.ok) {
+      throw new Error(`Server error: ${res.status}`)
+    }
+    await fetchConversations()
+
+  }catch (err) {
+    console.error('Failed to fetch conversations', err)
+    error.value = err.message || String(err)
+  } finally {
+    loading.value = false
+  }
+}
 async function deleteConversaiton(conversationID) {
   const token = getToken()
   if (!token) return
