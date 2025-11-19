@@ -157,7 +157,6 @@ async function sendMessage() {
     sending.value = false
   }
 }
-
 onMounted(() => {
   fetchHistory()
 })
