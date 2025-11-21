@@ -26,9 +26,10 @@
 
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { getToken } from '@/utils/localStorage'
 import { readJWT } from '@/utils/readJWT'
+
 
 const router = useRouter()
 const conversationId = ref(route.params.id || '1')
@@ -41,11 +42,6 @@ const error = ref(null)
 const messagesContainer = ref(null)
 
 
-onMounted(()=>{
-  if (!readJWT()){
-    router.push("/login")
-  }
-})
 // Special sender ID for AI responses
 const ASSISTANT_SENDER_ID = '00000000-0000-0000-0000-000000000001'
 
@@ -163,59 +159,75 @@ async function sendMessage() {
     sending.value = false
   }
 }
-onMounted(() => {
-  fetchHistory()
+onMounted(async () => {    
+  const token = getToken()
+
+  if (!token || !readJWT(token)) {
+    return router.push("/login")
+  }
+
+  await fetchHistory()
 })
 </script>
 
 <style scoped>
 .chat-app {
-  max-width: 600px;
-  margin: 40px auto;
+  /* Fill most of the viewport on desktop while keeping a comfortable margin */
+  position: fixed;
+  inset: 40px; /* top/right/bottom/left margin */
+  max-width: none;
+  width: auto;
+  padding: 20px;
   font-family: 'Inter', sans-serif;
   display: flex;
   flex-direction: column;
-  height: 80vh;
-  border: 1px solid #ccc;
-  border-radius: 12px;
+  height: auto;
+  border-radius: 14px;
   overflow: hidden;
-  background: #1e1e2f;
-  color: #e0e0e0;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  background: linear-gradient(180deg,#171726 0%, #1e1e2f 100%);
+  color: #e6e8ee;
+  box-shadow: 0 18px 40px rgba(2,6,23,0.6);
+  transition: max-width 200ms ease, padding 180ms ease;
 }
 
 .messages {
   flex: 1;
-  padding: 16px;
+  padding: 28px 32px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
   overflow-y: auto;
-  background: #252535;
+  background: linear-gradient(180deg, rgba(37,37,53,0.06), rgba(37,37,53,0.02));
+  font-size: 17px;
 }
 
 .message {
   display: flex;
   flex-direction: column;
+  line-height: 1.4;
 }
 
 .message.user {
   align-self: flex-end;
-  background: linear-gradient(90deg, #4ade80, #22d3ee);
-  color: #012;
-  padding: 10px 14px;
-  border-radius: 12px 12px 4px 12px;
-  max-width: 75%;
+  background: linear-gradient(90deg, #4ade80 0%, #06b6d4 100%);
+  color: #001219;
+  padding: 16px 20px;
+  border-radius: 14px 14px 6px 14px;
+  max-width: 68%;
   word-wrap: break-word;
+  box-shadow: 0 10px 30px rgba(3,10,14,0.35);
+  font-weight: 600;
 }
 
 .message.assistant {
   align-self: flex-start;
-  background: #3b3b55;
-  padding: 10px 14px;
-  border-radius: 12px 12px 12px 4px;
-  max-width: 75%;
+  background: linear-gradient(180deg,#3b3b55 0%, #2f2f45 100%);
+  padding: 14px 18px;
+  border-radius: 14px 14px 14px 6px;
+  max-width: 72%;
   word-wrap: break-word;
+  box-shadow: 0 6px 20px rgba(10,12,20,0.25);
+  color: #eef0f6;
 }
 
 .empty-state,
@@ -232,19 +244,22 @@ onMounted(() => {
 
 .composer {
   display: flex;
-  padding: 12px;
-  border-top: 1px solid #444;
-  background: #1f1f2d;
-  gap: 8px;
+  align-items: center;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  background: rgba(18,19,30,0.85);
+  gap: 12px;
 }
 
 .composer input {
   flex: 1;
-  padding: 10px 12px;
-  border-radius: 8px;
+  padding: 14px 16px;
+  border-radius: 10px;
   border: none;
-  background: #2a2a3d;
-  color: #e0e0e0;
+  background: #232333;
+  color: #f0f3f7;
+  font-size: 16px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
 }
 
 .composer input:focus {
@@ -258,13 +273,16 @@ onMounted(() => {
 }
 
 .composer button {
-  background: #4ade80;
-  color: #012;
+  background: linear-gradient(90deg,#4ade80 0%, #06b6d4 100%);
+  color: #001219;
   border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
+  padding: 12px 22px;
+  border-radius: 10px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 800;
+  font-size: 16px;
+  min-width: 140px;
+  box-shadow: 0 8px 24px rgba(6,182,212,0.18);
 }
 
 .composer button:hover:not(:disabled) {
@@ -276,17 +294,55 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
-::-webkit-scrollbar {
-  width: 8px;
+/* Scrollbar tweaks */
+.messages::-webkit-scrollbar {
+  width: 10px;
 }
-
-::-webkit-scrollbar-thumb {
+.messages::-webkit-scrollbar-thumb {
   background: #555;
-  border-radius: 4px;
+  border-radius: 6px;
+}
+.messages::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+/* Responsive adjustments */
+@media (min-width: 1280px) {
+  .chat-app {
+    max-width: 1400px;
+    height: 82vh;
+  }
+  .message.user, .message.assistant {
+    max-width: 60%;
+    font-size: 18px;
+  }
+  .composer button {
+    min-width: 160px;
+    padding: 14px 22px;
+  }
+}
+
+@media (max-width: 600px) {
+  .chat-app {
+    /* On small screens revert to normal flow so it doesn't overlay other UI */
+    position: static;
+    inset: auto;
+    margin: 16px;
+    height: 85vh;
+    border-radius: 8px;
+  }
+  .messages {
+    padding: 12px;
+    gap: 8px;
+  }
+  .message.user, .message.assistant {
+    max-width: 85%;
+    font-size: 14px;
+  }
+  .composer button {
+    min-width: 80px;
+    padding: 8px 12px;
+  }
 }
 </style>
 
