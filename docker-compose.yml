@@ -13,7 +13,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
   backend:
-    build: ./backend
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile.dev
     env_file:
       - ./backend/.env
     container_name: fastapi-backend
@@ -21,13 +23,21 @@ services:
       - "7000:8000"
     depends_on:
       - db
+    volumes:
+      - ./backend:/backend
     restart: always
 
   frontend:
-    build: ./frontend
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile.dev
     container_name: vue-frontend
     ports:
-      - "7070:80"
+      - "7070:5173"
+      - "5173:5173"
+    volumes:
+      - ./frontend/stud_assistant:/app
+      - /app/node_modules
     restart: always
 volumes:
   postgres_data:
