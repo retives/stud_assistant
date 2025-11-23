@@ -9,7 +9,7 @@ import os
 # Отримати директорію скрипту
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Шляхи до файлів
+
 TRAIN_FILE = os.path.join(BASE_DIR, "data", "train.json")
 TEST_FILE = os.path.join(BASE_DIR, "data", "test.json")
 STOPWORDS_FILE = os.path.join(BASE_DIR, "stopwords_ua.txt")
@@ -34,13 +34,11 @@ def train_classifier(X, y):
     with open(STOPWORDS_FILE, 'r', encoding='utf-8') as f:
         stop_words = f.read().splitlines()
 
-    # Create SINGLE vectorizer
     vectorizer = TfidfVectorizer(stop_words=stop_words)
 
-    # Fit vectorizer on ALL training data
     X_vectors = vectorizer.fit_transform(X)
 
-    # Train SVC
+
     classifier = SVC(kernel='linear')
     classifier.fit(X_vectors, y)
 
