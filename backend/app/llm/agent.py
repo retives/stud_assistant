@@ -5,6 +5,7 @@ from langchain.messages import SystemMessage
 from rich.console import Console
 from rich.markdown import Markdown
 from dotenv import load_dotenv
+from app.services.classifier import predict_label, preprocess_text, vectorizer, classifier
 import os
 
 load_dotenv()
@@ -101,7 +102,9 @@ if __name__ == '__main__':
         # api key
         ai_key=key
     )
-    user_message = "Які перспективи працевлаштування у моєї спеціальності?"
+    user_message = "Як справлятись з вигоранням студенту?"
+    label = predict_label(preprocess_text(user_message))
+    print(label)
     response = chat_agent.ask(user_message)
     title = chat_agent.get_title(user_message)
 
