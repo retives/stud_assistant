@@ -30,7 +30,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { getToken } from '@/utils/localStorage'
 import { readJWT } from '@/utils/readJWT'
 
-
+const route = useRoute()
 const router = useRouter()
 const conversationId = ref(route.params.id || '1')
 

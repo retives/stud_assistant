@@ -68,16 +68,20 @@ async def delete_conversation(db: db_dependency,
 
     chat_to_delete = (db.query(Conversation)
                       .filter(Conversation.owner_id == current_user.id, Conversation.id == conversation_id)
-                      )
-    if chat_to_delete:
-        try:
-            db.delete(chat_to_delete)
-            db.commit()
-        except HTTPException:
-            pass
+                      ).first()
+    if not chat_to_delete:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    try:
+        db.delete(chat_to_delete)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to delete conversation")
+        
     return JSONResponse(
         content='Deleted successfully',
-        status_code=status.HTTP_201_CREATED 
+        status_code=status.HTTP_200_OK
     )
 # Get covnersation details
 @router.get('/conversations/{conversation_id}', response_model=ConversationMessages)
@@ -111,7 +115,7 @@ async def get_conversation(conversation_id:str,
         conversation= ConversationRead.model_validate(conv_to_open),
         messages=message_list
     )
-
+    print(conv_messages)
     return conv_messages
 
 
@@ -141,7 +145,6 @@ async def update_conversation(updated_conversation: ConversationUpdate,
     conv_to_update.date_changed = datetime.now(timezone.utc).replace(microsecond=0)
     db.commit()
     db.refresh(conv_to_update)
-    
     
     return ConversationRead(conv_to_update)
 
