@@ -37,11 +37,11 @@ def get_user_conversations(db: db_dependency, current_user = Depends(get_current
     )
     return conversations
 
-@router.delete('/conversations/delete')
-async def delete_conversation(db: db_dependency, current_user = Depends(get_current_user), chat_to_delete = ConversationNew):
+@router.delete('/conversations/{conversation_id}/delete')
+async def delete_conversation(db: db_dependency, current_user = Depends(get_current_user), conversation_id: str = None):
     chat_to_delete = (db.query(Conversation)
-                      .filter(Conversation.owner_id == current_user.id, Conversation.id == chat_to_delete.id)
-                      )
+                      .filter(Conversation.owner_id == current_user.id, Conversation.id == conversation_id)
+                      ).first()
     if chat_to_delete:
         try:
             db.delete(chat_to_delete)
@@ -50,7 +50,7 @@ async def delete_conversation(db: db_dependency, current_user = Depends(get_curr
             pass
     return JSONResponse(
         content='Deleted successfully',
-        status_code=status.HTTP_201_CREATED 
+        status_code=status.HTTP_200_OK
     )
 # Get covnersation details
 @router.get('/conversations/{conversation_id}', response_model=ConversationMessages)
