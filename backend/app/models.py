@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, UUID
 from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import relationship
 # Empty base for models
 Base = declarative_base()
 
@@ -27,8 +28,12 @@ class Message(Base):
     content = Column(String)
     date = Column(DateTime)
     sender_id = Column(UUID, ForeignKey('users.id'))
-    conversation_id = Column(UUID, ForeignKey('conversations.id'))
-    
+    conversation_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("conversations.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    conversation = relationship("Conversation", back_populates="messages")
 # Conversation model 
 # Foreign key to user
 class Conversation(Base):
@@ -38,5 +43,11 @@ class Conversation(Base):
     title = Column(String(100))
     owner_id = Column(UUID, ForeignKey('users.id'))
     date_changed = Column(DateTime)
-    
+    messages = relationship(
+        "Message",
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+
     
