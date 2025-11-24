@@ -33,7 +33,6 @@ import { readJWT } from '@/utils/readJWT'
 
 const route = useRoute()
 const router = useRouter()
-const router = useRouter()
 const conversationId = ref(route.params.id || '1')
 
 const messages = ref([])

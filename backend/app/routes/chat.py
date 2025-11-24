@@ -115,7 +115,7 @@ async def get_conversation(conversation_id:str,
         conversation= ConversationRead.model_validate(conv_to_open),
         messages=message_list
     )
-
+    print(conv_messages)
     return conv_messages
 
 
@@ -145,7 +145,6 @@ async def update_conversation(updated_conversation: ConversationUpdate,
     conv_to_update.date_changed = datetime.now(timezone.utc).replace(microsecond=0)
     db.commit()
     db.refresh(conv_to_update)
-    
     
     return ConversationRead(conv_to_update)
 
