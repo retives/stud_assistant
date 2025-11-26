@@ -7,9 +7,16 @@ from app.models import User
 from app.routes import auth, chat
 from fastapi.middleware.cors import CORSMiddleware
 from uuid import UUID
+import time
+import logging
+
 # Main app instance
 app = FastAPI()
-
+logging.basicConfig(
+    filename="user_activity.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 # CORS handling
 # Origins of requests
 origins = [
@@ -66,6 +73,22 @@ def create_ai_user():
     finally:
         db.close()
 
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+
+    user = request.headers.get("X-User-ID", "anonymous")
+
+    response = await call_next(request)
+
+    process_time = round(time.time() - start_time, 3)
+
+    logging.info(
+        f"User={user} | Method={request.method} | Path={request.url.path} "
+        f"| Status={response.status_code} | Time={process_time}s"
+    )
+
+    return response
 
 if __name__ == "__main__":
     pass
