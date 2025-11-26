@@ -23,6 +23,13 @@ services:
       - "7000:8000"
     depends_on:
       - db
+    environment:
+      SECRET_KEY: "${SECRET_KEY}"
+      GEMINI_API_KEY: "${GEMINI_API_KEY}"
+      LANGSMITH_API_KEY: "${LANGSMITH_API_KEY}"
+      LANGSMITH_TRACING: "false"
+      LANGSMITH_ENDPOINT: "https://eu.api.smith.langchain.com"
+      LANGSMITH_PROJECT: "stud_assistant"
     volumes:
       - ./backend:/backend
     restart: always
