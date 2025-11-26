@@ -6,6 +6,7 @@ from rich.console import Console
 from rich.markdown import Markdown
 from dotenv import load_dotenv
 from app.services.classifier import predict_label, preprocess_text, vectorizer, classifier
+from langsmith import traceable
 import os
 
 load_dotenv()
@@ -57,6 +58,7 @@ class StudAgent:
                     """
         )
     # Main tool to generate responses
+    @traceable
     def ask(self, message):
         chat_messages = self.chat_prompt.format_messages(
             courses= self.courses,
@@ -70,6 +72,7 @@ class StudAgent:
         return response.content if hasattr(response, 'content') else response
 
     # Initial title generation
+    @traceable
     def get_title(self, message):
         title_messages = self.title_prompt.format(
             user_message=message,
