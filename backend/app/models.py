@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, UUID
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
+from types import ENUM
 # Empty base for models
 Base = declarative_base()
 
@@ -50,4 +51,12 @@ class Conversation(Base):
         passive_deletes=True
     )
 
-    
+class Payment(Base):
+    __tablename__ = 'payments'
+
+    id = Column(UUID, primary_key=True)
+    user_id = Column(UUID, ForeignKey('users.id'))
+    stripe_customer_id = Column(String(255), nullable=False)
+    stripe_payment_method_id = Column(String(255), nullable=False)
+    status= Column(ENUM('succeded', 'requires_action', 'failed', name='payment_status'), default='active')
+    last_updated = Column(DateTime)
