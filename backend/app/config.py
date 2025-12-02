@@ -1,10 +1,11 @@
 from dotenv import load_dotenv
 from uuid import UUID
+import os
 # JWT configuration
 
 # in seconds
 TOKEN_EXPIRE_TIME = 3600
 SECRET_KEY = str(load_dotenv('SECRET_KEY'))
 ALGORITHM = 'HS256'
-SYSTEM_ID = UUID("00000000-0000-0000-0000-000000000001")
-SYSTEM_PASSWORD = "Itjv8#VC4!bandV52Kd%M#CrY"
+SYSTEM_ID = UUID(os.getenv('SYSTEM_ID'))
+SYSTEM_PASSWORD = os.getenv('SYSTEM_PASSWORD')
