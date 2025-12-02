@@ -69,4 +69,7 @@ class ConversationMessages(BaseModel):
     conversation: ConversationRead
     messages: list[MessageSave] | None = None
     
+
+class PaymentInfo(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     
