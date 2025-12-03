@@ -46,6 +46,9 @@ class ConversationRead(ConversationBase):
     
 class ConversationUpdate(ConversationBase):
     title: str
+
+class ConversationDelete(BaseModel):
+    id: UUID
     
 # Message schemas
 class MessageBase(BaseModel):

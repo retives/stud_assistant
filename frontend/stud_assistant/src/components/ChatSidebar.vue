@@ -12,7 +12,7 @@
       <ul v-else>
         <li v-for="chat in sortedChats" :key="chat.id" class="chat-item">
           <router-link :to="`/chat/${chat.id}`" class="chat-link" @click="$emit('update:visible', false)">
-            <div class="title">{{ chat.title || 'Untitled' }} <button @click="deleteConversaiton(chat.conversation_id)">Remove</button></div>
+            <div class="title">{{ chat.title || 'Untitled' }}</div>
             <div class="meta">{{ formatDate(chat.date_changed) }}</div>
           </router-link>
           <div class="actions">
@@ -138,6 +138,7 @@ async function deleteConversaiton(conversationID) {
     if (!res.ok) {
       throw new Error(`Server error: ${res.status}`)
     }
+
     await fetchConversations()
 
   }catch (err) {
@@ -147,10 +148,7 @@ async function deleteConversaiton(conversationID) {
     loading.value = false
   }
 }
-onMounted(() => {
-  // fetch if user is logged in
-  fetchConversations()
-})
+// (mounted/unmounted handled above)
 </script>
 
 <style scoped>
