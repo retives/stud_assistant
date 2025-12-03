@@ -17,7 +17,8 @@
 import { ref } from 'vue'
 import ChatSidebar from './components/ChatSidebar.vue'
 
-const sidebarOpen = ref(false)
+// Sidebar visible by default; user can toggle to hide it
+const sidebarOpen = ref(true)
 
 // Example data in the format you specified. In real use pass this in or fetch from the API.
 const chats = ref([
