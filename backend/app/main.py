@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from uuid import UUID
 import time
 import logging
+from dotenv import load_dotenv
 
 # Main app instance
 app = FastAPI()
@@ -55,6 +56,7 @@ def on_startup():
 
 @app.on_event("startup")
 def create_ai_user():
+    load_dotenv()
     db: Session = SessionLocal()
     try:
         ai_user = db.query(User).filter_by(id=SYSTEM_ID).first()

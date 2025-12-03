@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from uuid import UUID
 from datetime import datetime
+from typing import Optional
 # Shared properties
 class UserBase(BaseModel):
     email: EmailStr = Field(min_length=5, max_length=120)
@@ -67,6 +68,23 @@ class ConversationMessages(BaseModel):
     messages: list[MessageSave] | None = None
     
 
-class PaymentInfo(BaseModel):
+class SubscriptionBase(BaseModel):
+    user_id: int
+    price_id: str
+
+class SubscriptionCreate(SubscriptionBase):
+    stripe_subscription_id: str
+    status: Optional[str] = "incomplete"
+    current_period_start: Optional[datetime] = None
+    current_period_end: Optional[datetime] = None
+
+class SubscriptionRead(SubscriptionBase):
+    id: int
+    stripe_subscription_id: str
+    status: str
+    current_period_start: Optional[datetime] = None
+    current_period_end: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
     model_config = ConfigDict(from_attributes=True)
-    

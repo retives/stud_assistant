@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, UUID
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, UUID, Enum, Float
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
-from types import ENUM
+from datetime import datetime, timezone
 # Empty base for models
 Base = declarative_base()
 
@@ -13,10 +13,12 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False)
     email = Column(String(120), unique=True, nullable=False)
     password = Column(String(255), nullable = False)
+    customers_id = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
     is_superuser = Column(Boolean, default=False)
 
+    subscriptions = relationship("Subscription", back_populates="user")
     def __repr__(self):
         return f"<User(username='{self.username}', email='{self.email}')>"
 
@@ -51,12 +53,17 @@ class Conversation(Base):
         passive_deletes=True
     )
 
-class Payment(Base):
-    __tablename__ = 'payments'
+class Subscription(Base):
+    __tablename__ = "subscriptions"
 
-    id = Column(UUID, primary_key=True)
-    user_id = Column(UUID, ForeignKey('users.id'))
-    stripe_customer_id = Column(String(255), nullable=False)
-    stripe_payment_method_id = Column(String(255), nullable=False)
-    status= Column(ENUM('succeded', 'requires_action', 'failed', name='payment_status'), default='active')
-    last_updated = Column(DateTime)
+    id = Column(UUID, primary_key=True, index=True)
+    user_id = Column(UUID, ForeignKey("users.id"), nullable=False)
+    stripe_subscription_id = Column(String, unique=True, nullable=False)
+    price_id = Column(String, nullable=False)  
+    status = Column(String, default="incomplete") 
+    current_period_start = Column(DateTime, nullable=True)
+    current_period_end = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.utcnow)
+
+    user = relationship("User", back_populates="subscriptions")
