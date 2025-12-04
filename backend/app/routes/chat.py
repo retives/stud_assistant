@@ -96,10 +96,7 @@ async def get_conversation(conversation_id:str,
         conversation= ConversationRead.model_validate(conv_to_open),
         messages=message_list
     )
-<<<<<<< HEAD
-=======
     print(conv_messages)
->>>>>>> c1f2be0 (Working on backend + frontend)
     return conv_messages
 
 
@@ -127,11 +124,7 @@ async def update_conversation(updated_conversation: ConversationUpdate,
     db.commit()
     db.refresh(conv_to_update)
     
-<<<<<<< HEAD
-    return conv_to_update
-=======
     return ConversationRead(conv_to_update)
->>>>>>> c1f2be0 (Working on backend + frontend)
 
 # Send message
 @router.post('/conversations/{conversation_id}/sendmessage', response_model=MessageSave)
