@@ -5,9 +5,6 @@ from app.schemas import UserRead
 Note: Allow to save payment info
 """
 
-
-
-# Add API key from env
 stripe_key = os.getenv('STRIPE_KEY')
 stripe.api_key = stripe_key
 
@@ -18,7 +15,7 @@ def init_customer(user):
         return stripe.Customer.retrieve(user.stripe_customer_id)
     
     # Create new Stripe customer
-    customer = stripe.Customer.create(email=user.email)
+    customer = stripe.Customer.create(mail=user.email)
     
     # Here you should save the customer id in your DB
     user.stripe_customer_id = customer.id

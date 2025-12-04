@@ -17,7 +17,9 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
     is_superuser = Column(Boolean, default=False)
-
+    
+    customer_id = Column(UUID)
+    
     subscriptions = relationship("Subscription", back_populates="user")
     def __repr__(self):
         return f"<User(username='{self.username}', email='{self.email}')>"
