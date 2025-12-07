@@ -64,13 +64,11 @@ async def stripe_webhooks(request: Request, db: db_dependency):
     Verifies the signature and processes critical subscription events.
     """
     
-    # 1. Get the raw request body and signature
     payload = await request.body()
     sig_header = request.headers.get('stripe-signature')
     
     event = None
 
-    # 2. Verify the webhook signature for security
     try:
         event = stripe.Webhook.construct_event(
             payload, sig_header, WEBHOOK_SECRET
@@ -82,33 +80,25 @@ async def stripe_webhooks(request: Request, db: db_dependency):
         # Invalid signature
         raise HTTPException(status_code=400, detail="Invalid signature")
 
-    # 3. Handle the event type
-    # We are primarily interested in confirming a successful checkout session.
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
         
-        # Data we need:
         customer_id = session.get('customer')
         subscription_id = session.get('subscription')
         
-        # Important: Retrieve the user from your database using the Stripe Customer ID
         user = db.query(User).filter(User.stripe_customer_id == customer_id).first()
         
         if user:
-            # 4. Activate the user's subscription status in your DB
             user.is_plus_subscriber = True
-            user.stripe_subscription_id = subscription_id # Save the sub ID for cancellation/management
+            user.stripe_subscription_id = subscription_id 
             db.add(user)
             db.commit()
             print(f"Subscription activated for user: {user.email}")
             
         else:
-            # Log an error if a customer ID from Stripe doesn't match a user in your DB
             print(f"Error: User not found for customer ID: {customer_id}")
-            # You might want to contact the user or log this for manual review
         
     elif event['type'] == 'customer.subscription.deleted':
-        # Handle subscription cancellation or expiration
         session = event['data']['object']
         customer_id = session.get('customer')
         
@@ -120,7 +110,4 @@ async def stripe_webhooks(request: Request, db: db_dependency):
             db.commit()
             print(f"Subscription deactivated for user: {user.email}")
             
-    # Add handlers for other events as your app grows (e.g., invoice.payment_failed)
-
-    # 5. Return a 200 OK status to Stripe
     return JSONResponse(content={"success": True})
