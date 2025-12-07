@@ -12,17 +12,19 @@ class User(Base):
     id = Column(UUID, primary_key=True)
     username = Column(String(50), unique=True, nullable=False)
     email = Column(String(120), unique=True, nullable=False)
-    password = Column(String(255), nullable = False)
-    customers_id = Column(String(255), nullable=True)
+    password = Column(String(255), nullable=False)
+
+
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
     is_superuser = Column(Boolean, default=False)
-    
-    customer_id = Column(UUID)
-    
-    subscriptions = relationship("Subscription", back_populates="user")
+
+    # Stripe customer ID (string)
+    customer_id = Column(String(255), nullable=True)
+    stripe_subscription_id = Column(String(255), nullable=True, index=True)
+    is_plus_subscriber = Column(Boolean, default=False)
     def __repr__(self):
-        return f"<User(username='{self.username}', email='{self.email}')>"
+        return f"<User(username='{self.username}', email='{self.email}', is_plus_subscriber={self.is_plus_subscriber})>"
 
 # Message model
 # Foreign key to conversation
@@ -54,18 +56,3 @@ class Conversation(Base):
         cascade="all, delete-orphan",
         passive_deletes=True
     )
-
-class Subscription(Base):
-    __tablename__ = "subscriptions"
-
-    id = Column(UUID, primary_key=True, index=True)
-    user_id = Column(UUID, ForeignKey("users.id"), nullable=False)
-    stripe_subscription_id = Column(String, unique=True, nullable=False)
-    price_id = Column(String, nullable=False)  
-    status = Column(String, default="incomplete") 
-    current_period_start = Column(DateTime, nullable=True)
-    current_period_end = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.utcnow)
-
-    user = relationship("User", back_populates="subscriptions")

@@ -70,24 +70,9 @@ class ConversationMessages(BaseModel):
     conversation: ConversationRead
     messages: list[MessageSave] | None = None
     
+# Stripe
 
-class SubscriptionBase(BaseModel):
-    user_id: int
-    price_id: str
-
-class SubscriptionCreate(SubscriptionBase):
-    stripe_subscription_id: str
-    status: Optional[str] = "incomplete"
-    current_period_start: Optional[datetime] = None
-    current_period_end: Optional[datetime] = None
-
-class SubscriptionRead(SubscriptionBase):
-    id: int
-    stripe_subscription_id: str
-    status: str
-    current_period_start: Optional[datetime] = None
-    current_period_end: Optional[datetime] = None
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)
+class CheckoutResponse(BaseModel):
+    url: str
+class PlanSelection(BaseModel):
+    selected_plan: str
