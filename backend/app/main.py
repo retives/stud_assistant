@@ -4,12 +4,12 @@ from sqlalchemy.orm import Session
 from app.config import SYSTEM_ID, SYSTEM_PASSWORD
 from app.database import SessionLocal, Base, engine
 from app.models import User
-from app.routes import auth, chat
+from app.routes import auth, chat, subscription
 from fastapi.middleware.cors import CORSMiddleware
 from uuid import UUID
 import time
 import logging
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
 # Main app instance
 app = FastAPI()
@@ -25,6 +25,7 @@ origins = [
     "http://127.0.0.1:5173",
     "http://localhost:7070",
     "http://127.0.0.1:7070",
+    "http://172.18.0.4:5173",
 ]
 # Adding middleware
 app.add_middleware(
@@ -38,6 +39,7 @@ app.add_middleware(
 # Routes
 app.include_router(auth.router)
 app.include_router(chat.router)
+app.include_router(subscription.router)
 # Index route
 @app.get('/')
 def start_page():
@@ -51,12 +53,13 @@ async def all_exception_handler(request: Request, exc: Exception):
 
 @app.on_event("startup")
 def on_startup():
+    load_dotenv(find_dotenv())
     Base.metadata.create_all(bind=engine)
 
 
 @app.on_event("startup")
 def create_ai_user():
-    load_dotenv()
+    
     db: Session = SessionLocal()
     try:
         ai_user = db.query(User).filter_by(id=SYSTEM_ID).first()
