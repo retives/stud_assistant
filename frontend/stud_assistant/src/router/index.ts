@@ -3,7 +3,8 @@ import Chat from '@/components/Chat.vue'
 import Login from '@/components/Login.vue'
 import Signup from '@/components/Signup.vue'
 import Payment from '@/components/Payment.vue'
-
+import SuccessPage from '../components/SuccessPage.vue'
+import CancelPage from '../components/CancelPage.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: Chat },
@@ -11,6 +12,8 @@ const routes = [
   { path: '/login', name: 'Login', component: Login },
   { path: '/signup', name: 'Signup', component: Signup },
   { path: '/subscription', name: 'Subscription', component: Payment },
+  {path: '/payments/success', name: 'SubscriptionSuccess', component: SuccessPage},
+  {path: '/payments/cancel', name: 'SubscriptionCancel', component: CancelPage},
 ]
 
 

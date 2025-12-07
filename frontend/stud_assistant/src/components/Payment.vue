@@ -1,102 +1,100 @@
 <template>
-  <div>
-    <h1>Pay $10</h1>
+  <div class="auth-page">
+    <h2>Upgrade to Plus</h2>
 
-    <form id="payment-form" @submit.prevent="submitPayment">
-      <div id="card-element"></div>
-      <button type="submit">Pay</button>
-      <div id="payment-result">{{ result }}</div>
+    <form @submit.prevent="startCheckout" class="auth-form"> 
+      
+      <div class="input-group">
+        <label>Subscription Plan</label>
+        
+        <select v-model="selectedPlan" :class="{ error: planError }"> 
+          <option disabled value="">Select a plan</option>
+          <option value="plus_monthly">Plus (Monthly)</option>
+        </select>
+        <p v-if="planError" class="error-msg">{{ planError }}</p>
+      </div>
+
+      <div class="input-group">
+        <label>Benefits</label>
+        <ul class="benefits-list">
+          <li>• Unlimited AI interactions</li>
+          <li>• Faster response times</li>
+          <li>• Priority queue</li>
+          <li>• Access to premium tools</li>
+        </ul>
+      </div>
+
+      <button type="submit">Proceed to Checkout</button>
+
+      <p v-if="serverError" class="error-msg server">{{ serverError }}</p>
+
+      <div class="links">
+        <router-link to="/dashboard">Back to Dashboard</router-link>
+      </div>
     </form>
   </div>
 </template>
 
 <script>
-import { getToken } from "../utils/localStorage";
+import axios from "axios";
+import { getToken } from '../utils/localStorage';
 
-export default {
+export default { 
+  
+  name: "SubscriptionPage",
   data() {
     return {
-      stripe: null,
-      card: null,
-      result: "",
+      selectedPlan: "",
+      planError: "",
+      serverError: "",
     };
   },
-
-  async mounted() {
-    await this.loadStripe();
-
-    this.stripe = window.Stripe(
-      "pk_test_51SZpU01fYwurwjWvwYipBvqsLMqWq4UJXhhQlZo77k1Ru46yeqSCcQXurIXRufobp65hru7Lajp5Z7JFH5kkAZ9U008p2zbvo8"
-    );
-
-    const elements = this.stripe.elements();
-    this.card = elements.create("card");
-    this.card.mount("#card-element");
-  },
-
   methods: {
-    // Load Stripe.js dynamically
-    loadStripe() {
-      return new Promise((resolve) => {
-        if (window.Stripe) return resolve();
-
-        const script = document.createElement("script");
-        script.src = "https://js.stripe.com/v3/";
-        script.onload = resolve;
-        document.head.appendChild(script);
-      });
-    },
-
-    async submitPayment() {
-      const token = getToken();
-
-      const response = await fetch("http://127.0.0.1:8000/payments/subscribe", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({}),
-      });
-
-      const data = await response.json();
+    
+    async startCheckout() {
       
-      const result = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: { card: card }
-      });
+      const token = getToken()
+      console.log(token)
+      this.clearErrors();
 
-      const output = document.getElementById("payment-result");
-      if (result.error) {
-        output.textContent = "Payment failed: " + result.error.message;
-      } else if (result.paymentIntent.status === "succeeded") {
-        output.textContent = "Payment succeeded!";
+      if (!this.selectedPlan) {
+        this.planError = "Please select a subscription plan.";
+        return;
       }
-      console.log(output)
+
+      try {
+        const response = await axios.post(
+          "http://localhost:7000/payments/create-checkout-session",
+          { selected_plan: this.selectedPlan },
+          {
+            withCredentials: true,
+            headers: {
+              "Authorization": `Bearer ${token}` 
+            }
+          }
+        );
+
+        if (response.data.url) {
+          window.location.href = response.data.url; // Redirect to Stripe
+        } else {
+          this.serverError = "Unable to start checkout session.";
+        }
+      } catch (error) {
+        if (error.response && error.response.status >= 500) {
+          this.serverError = "Server error, please try again later.";
+        } else if (error.response?.data?.detail) {
+          this.serverError = error.response.data.detail;
+        } else {
+          this.serverError = "Failed to begin checkout.";
+        }
+      }
+    },
+    clearErrors() {
+      this.planError = "";
+      this.serverError = "";
     },
   },
-};
+}; 
 </script>
-<!-- 
-    const form = document.getElementById("payment-form");
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
 
-      const res = await fetch("http://127.0.0.1:8000/create-payment-intent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: 1, amount: 1000, currency: "usd" }) // Example payload
-      });
-      const data = await res.json();
-      const clientSecret = data.client_secret;
-
-      const result = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: { card: card }
-      });
-
-      const output = document.getElementById("payment-result");
-      if (result.error) {
-        output.textContent = "Payment failed: " + result.error.message;
-      } else if (result.paymentIntent.status === "succeeded") {
-        output.textContent = "Payment succeeded!";
-      }
-    }); -->
+<style scoped src="@/assets/auth.css"></style>
