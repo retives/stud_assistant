@@ -23,7 +23,6 @@ def init_customer(user: User, db: db_dependency):
     # Create new Stripe customer
     customer = stripe.Customer.create(email=user.email)
     
-    # --- IMPORTANT: SAVE THE NEW ID TO YOUR DATABASE ---
     user.stripe_customer_id = customer.id
     db.add(user)
     db.commit()
@@ -31,14 +30,3 @@ def init_customer(user: User, db: db_dependency):
     
     return customer
 
-
-def create_payment_intent(customer_id: str, amount: int, currency: str = 'usd'):
-    """Create a payment intent for a customer."""
-    intent = stripe.PaymentIntent.create(
-        amount=amount,
-        currency=currency,
-        customer=customer_id,
-        payment_method_types=["card"],
-
-    )
-    return intent
