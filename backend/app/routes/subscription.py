@@ -4,7 +4,7 @@ from app.database import db_dependency
 from app.schemas import CheckoutResponse, PlanSelection
 from app.models import User
 from app.routes.auth import get_current_user
-from app.services.payment import init_customer, create_payment_intent
+from app.services.payment import init_customer
 from app.limiter import limiter
 import stripe
 import os 
