@@ -111,8 +111,15 @@ async def login_for_access_token(request: Request, form_data: Annotated[OAuth2Pa
 
 # Logout
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout(response: Response):
-    response.delete_cookie("access_token")
+def logout(db: db_dependency, response: Response, user = Depends(get_current_user)): # <--- INJECT THE RESPONSE OBJECT
+    """
+    Clears the access token cookie from the client.
+    """
+    # 1. Delete the cookie. Note the name must match how it was set during login.
+    response.delete_cookie(key="access_token")
+    
+    # 2. Return the response object.
+    # Since the status code is set to 204 (No Content), the client expects no body.
     return response    
 
 # Temp routes

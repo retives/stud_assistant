@@ -31,8 +31,8 @@ def create_conversation(db: db_dependency,
     )
     db.add(new_conv)
     db.commit()
-
-    return ConversationRead(new_conv)
+    db.refresh(new_conv)
+    return ConversationRead.model_validate(new_conv)
 
 # User chats
 @router.get('/conversations', response_model=List[ConversationRead])
