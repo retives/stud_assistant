@@ -5,14 +5,14 @@
       <h2>Payment Successful!</h2>
       <p>Thank you for subscribing! Your Plus plan is now active.</p>
       <p v-if="sessionId">
-        Confirmation ID: <strong>{{ sessionId }}</strong>
+        Confirmation ID: <strong id="session">{{ sessionId }}</strong>
       </p>
       <p class="next-step">
         You can now access all premium AI features.
       </p>
       
-      <router-link to="/dashboard" class="action-button">
-        Go to Dashboard
+      <router-link to="/chat" class="action-button">
+        Go to chats
       </router-link>
     </div>
   </div>
@@ -63,6 +63,7 @@ export default {
   align-items: center;
   min-height: 80vh;
   text-align: center;
+  
 }
 
 .content-box {
@@ -71,6 +72,7 @@ export default {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   background: white;
   max-width: 500px;
+  width: fit-content;
 }
 
 .success-icon {
@@ -107,5 +109,8 @@ p {
 
 .action-button:hover {
   background-color: #4a54e6;
+}
+#session{
+  font-size: 11px;
 }
 </style>
