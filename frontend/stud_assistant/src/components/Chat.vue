@@ -42,6 +42,11 @@ const error = ref(null)
 const messagesContainer = ref(null)
 
 
+onMounted(()=>{
+  if (!getToken()){
+    router.push("/login")
+  }
+})
 // Special sender ID for AI responses
 const ASSISTANT_SENDER_ID = '00000000-0000-0000-0000-000000000001'
 

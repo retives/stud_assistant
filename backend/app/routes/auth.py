@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, Depends, Path, HTTPException
+from fastapi import APIRouter, Response, Depends, Path, HTTPException, Request
 from uuid import UUID, uuid4
 import uuid
 from typing import Annotated
@@ -11,9 +11,11 @@ from app.security import verify_password, hash_password, create_access_token, is
 from app.schemas import Token
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from app.limiter import limiter
 
 # Router for auth module
 router = APIRouter()
+
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -62,8 +64,9 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: db
     return user
 
 # Register
+@limiter.limit("5/minute")
 @router.post('/signup')
-async def register_user(user_request: UserCreate, db: db_dependency): # type: ignore
+async def register_user(request: Request, user_request: UserCreate, db: db_dependency): # type: ignore
     # Password validation
     password = user_request.password
 
@@ -95,8 +98,9 @@ async def register_user(user_request: UserCreate, db: db_dependency): # type: ig
     return Token(access_token = token, token_type = 'bearer')
 
 # Login 
+@limiter.limit("5/minute")
 @router.post('/token',response_model=Token)
-async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db:db_dependency): # type: ignore
+async def login_for_access_token(request: Request, form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db:db_dependency): # type: ignore
     # User model
     user = authenticate_user(form_data.username, form_data.password, db)
     # Token creation

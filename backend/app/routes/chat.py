@@ -14,7 +14,14 @@ from datetime import datetime, timezone
 router = APIRouter()
 
 @router.post('/conversations/new-conversation')
-def create_conversation(db: db_dependency, current_user = Depends(get_current_user)):
+def create_conversation(db: db_dependency, 
+                        current_user = Depends(get_current_user)):
+    """
+    Input:
+        - current_user:str -  JWT token
+    Output:
+        - ConversationRead{owner_id, id, title, date,changed}
+    """
     # Create conversation in db
     new_conv = Conversation(
         title='New chat',
@@ -24,11 +31,20 @@ def create_conversation(db: db_dependency, current_user = Depends(get_current_us
     )
     db.add(new_conv)
     db.commit()
-    return new_conv
 
-# 
+    return ConversationRead(new_conv)
+
+# User chats
 @router.get('/conversations', response_model=List[ConversationRead])
-def get_user_conversations(db: db_dependency, current_user = Depends(get_current_user)):
+def get_user_conversations(db: db_dependency, 
+                           current_user = Depends(get_current_user)):
+    """
+    Input:
+        - Header with jwt
+    Output:
+        - List[ConversationRead]
+    """
+
     conversations = (
     db.query(Conversation)
     .filter(Conversation.owner_id == current_user.id)
@@ -77,6 +93,9 @@ async def get_conversation(conversation_id:str,
     Input: 
         - conversation_id: str - Query parameter
         - body: None 
+    Output:
+        - ConversationRead{owner_id, id, title, date,changed, + messages*}
+        - messages: List[{content, conversation_id, sender_id, date}]
     """
     # Conversation from the database
     conv_to_open = (db.query(Conversation)
@@ -97,6 +116,7 @@ async def get_conversation(conversation_id:str,
         messages=message_list
     )
     print(conv_messages)
+
     return conv_messages
 
 
@@ -109,7 +129,10 @@ async def update_conversation(updated_conversation: ConversationUpdate,
     Input:
         - conversation_id: str - Query parameter
         - body: ConversationUpdate(title)
-    Else is handled by FastAPI
+        - Else is handled by FastAPI
+
+    Output:
+        - ConversationRead:{id, owner_id, }
     """
 
     conv_to_update = (db.query(Conversation)
@@ -139,7 +162,10 @@ async def send_message(
     Input:
         - conversation_id: str - Query parameter
         - body: {MessageCreate(message_content)}
-    Else is handled by FastAPI
+        - Else is handled by FastAPI
+
+    Output:
+        - ai message: {id, content, date, conversation_id, sender_id}
     """
     # Getting the conversation
     conv = (db.query(Conversation)
@@ -184,12 +210,12 @@ async def send_message(
         sender_id = SYSTEM_ID
     )
 
-
     db.add(new_message)
     db.add(message_from_ai)
     conv.date_changed = datetime.now(timezone.utc).replace(microsecond=0)
     db.commit()
     db.refresh(new_message)
+
     return message_from_ai
 
 

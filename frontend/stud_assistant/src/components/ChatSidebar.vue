@@ -148,7 +148,10 @@ async function deleteConversaiton(conversationID) {
     loading.value = false
   }
 }
-// (mounted/unmounted handled above)
+onMounted(() => {
+  // fetch if user is logged in
+  fetchConversations()
+})
 </script>
 
 <style scoped>
