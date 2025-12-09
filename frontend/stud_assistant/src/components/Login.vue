@@ -96,4 +96,8 @@ export default {
 };
 </script>
 
-<style scoped src="@/assets/auth.css"></style>
+<style scoped src="@/assets/auth.css">
+.auth-page{
+  min-width: 200px;
+}
+</style>
