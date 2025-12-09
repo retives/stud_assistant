@@ -4,10 +4,14 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import Annotated
 from sqlalchemy import text
-
+import os
 from app.models import Base
+
 # Database connection string
-DATABASE_URL= 'postgresql+psycopg2://stud_user:student@db:5432/stud_assistant'
+DATABASE_URL = os.environ.get(
+    'DATABASE_URL',
+    'postgresql+psycopg2://stud_user:student@db:5432/stud_assistant' 
+)
 
 engine = sa.create_engine(DATABASE_URL, echo=True, future=True)
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
