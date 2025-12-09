@@ -5,7 +5,7 @@ import vueJsx from '@vitejs/plugin-vue-jsx';
 
 // https://vite.dev/config/
 export default defineConfig({
-    base:'/stud_assistant/',
+    base:'/',
     plugins: [
         vue(),
         vueJsx(),

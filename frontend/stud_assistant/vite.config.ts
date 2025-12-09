@@ -9,7 +9,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 export default defineConfig({
   // Use relative base so assets are referenced relatively and avoid MIME issues
   // when serving the built files from a subpath or different static server.
-  base: '/stud_assistant/',
+  base: '/',
   plugins: [
     vue(),
     vueJsx(),
