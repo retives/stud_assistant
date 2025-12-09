@@ -1,11 +1,12 @@
-from fastapi import APIRouter, HTTPException, status, Depends, Request, JSONResponse
+from fastapi import APIRouter, HTTPException, status, Depends, Request
+from fastapi.responses import JSONResponse
 from app.database import db_dependency
 from app.schemas import CheckoutResponse, PlanSelection
 from app.models import User
 from app.routes.auth import get_current_user
 from app.services.payment import init_customer, create_payment_intent
+from app.limiter import limiter
 import stripe
-
 import os 
 
 router = APIRouter(prefix='/payments', tags=['payments'])
@@ -14,9 +15,9 @@ PRICE_ID_MAP = {
     "plus_monthly": os.getenv('STRIPE_PRICE_ID_PLUS_MONTHLY'),
 
 }
-
+@limiter.limit("5/minute")
 @router.post("/create-checkout-session", response_model=CheckoutResponse)
-def create_checkout_session(plan: PlanSelection, db: db_dependency, user: User = Depends(get_current_user)):
+def create_checkout_session(request: Request, plan: PlanSelection, db: db_dependency, user: User = Depends(get_current_user)):
     """
     1. Ensures the user has a Stripe Customer ID.
     2. Creates the Stripe Checkout Session for subscription.
@@ -57,6 +58,7 @@ def create_checkout_session(plan: PlanSelection, db: db_dependency, user: User =
         
     return CheckoutResponse(url=session.url)
 
+@limiter.limit("5/minute")
 @router.post("/webhooks")
 async def stripe_webhooks(request: Request, db: db_dependency):
     """
@@ -93,7 +95,7 @@ async def stripe_webhooks(request: Request, db: db_dependency):
             user.stripe_subscription_id = subscription_id 
             db.add(user)
             db.commit()
-            print(f"Subscription activated for user: {user.email}")
+            print(f"Subscription actiзvated for user: {user.email}")
             
         else:
             print(f"Error: User not found for customer ID: {customer_id}")
