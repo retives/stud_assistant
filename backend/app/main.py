@@ -5,6 +5,7 @@ from app.config import SYSTEM_ID, SYSTEM_PASSWORD
 from app.database import SessionLocal, Base, engine
 from app.models import User
 from app.routes import auth, chat, subscription
+from app.limiter import limiter, add_rate_limit_error_handler
 from fastapi.middleware.cors import CORSMiddleware
 from uuid import UUID
 import time
@@ -13,6 +14,13 @@ from dotenv import load_dotenv, find_dotenv
 
 # Main app instance
 app = FastAPI()
+
+# Add rate limiter state
+app.state.limiter = limiter
+
+# Add rate limit error handler
+add_rate_limit_error_handler(app)
+
 logging.basicConfig(
     filename="user_activity.log",
     level=logging.INFO,
@@ -35,6 +43,13 @@ app.add_middleware(
     allow_methods = ['*'],
     allow_headers = ['*']
 )
+
+# Add rate limiter middleware
+app.state.limiter = limiter
+app.add_exception_handler(429, lambda request, exc: JSONResponse(
+    status_code=429,
+    content={"detail": "Rate limit exceeded. Too many requests."}
+))
 
 # Routes
 app.include_router(auth.router)

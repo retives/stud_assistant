@@ -148,30 +148,6 @@ async function deleteConversaiton(conversationID) {
     loading.value = false
   }
 }
-async function deleteConversaiton(conversationID) {
-  const token = getToken()
-  if (!token) return
-  loading.value = true
-  error.value = null
-  try {
-    const res = await fetch(`http://localhost:7000/conversations/${conversationID}/delete`,{
-      method: "DELETE",
-      headers: { 'Authorization': `Bearer ${token}` },
-      credentials: 'include'
-    })
-    if (!res.ok) {
-      throw new Error(`Server error: ${res.status}`)
-    }
-
-    await fetchConversations()
-
-  }catch (err) {
-    console.error('Failed to fetch conversations', err)
-    error.value = err.message || String(err)
-  } finally {
-    loading.value = false
-  }
-}
 onMounted(() => {
   // fetch if user is logged in
   fetchConversations()
