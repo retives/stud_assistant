@@ -1,6 +1,6 @@
 
 <template>
-  <div class="chat-app">
+  <div v-if="conversationId"class="chat-app">
     <div ref="messagesContainer" class="messages">
       <div v-if="loading" class="empty-state">Loading conversation...</div>
       <div v-else-if="error" class="error-state">{{ error }}</div>
@@ -22,13 +22,17 @@
       </button>
     </div>
   </div>
+  <div v-else>
+    <h1>Create a new chat and begin recieving help from AI</h1>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getToken } from '@/utils/localStorage'
 import { readJWT } from '@/utils/readJWT'
+
 // Read backend base URL from environment (Vite)
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7000'
 
@@ -99,6 +103,25 @@ async function fetchHistory() {
     loading.value = false
   }
 }
+
+watch(
+  () => route.params.id,
+  async (newId, oldId) => {
+    // Only proceed if the ID actually changed and the new ID is valid
+    if (newId && newId !== oldId) {
+      // 1. Update the local ref with the new ID
+      conversationId.value = newId
+      
+      // 2. Trigger the data fetch for the new conversation
+      await fetchHistory() 
+      
+      // Optional: Reset input or other component state if needed
+      // input.value = ''
+    }
+  },
+  // Ensure the watcher runs immediately if the component loads directly with an ID
+  // { immediate: true } // You already handle the initial fetch in onMounted, so this isn't strictly needed
+)
 
 // Send a message
 async function sendMessage() {
@@ -179,22 +202,22 @@ onMounted(async () => {
 
 <style scoped>
 .chat-app {
-  /* Fill most of the viewport on desktop while keeping a comfortable margin */
   position: fixed;
-  inset: 40px; /* top/right/bottom/left margin */
+  inset: 40px 40px 0px 40px; /* top/right/bottom/left margin */
   max-width: none;
   width: auto;
   padding: 20px;
   font-family: 'Inter', sans-serif;
   display: flex;
   flex-direction: column;
-  height: auto;
+  height: 150%;
   border-radius: 14px;
   overflow: hidden;
   background: linear-gradient(180deg,#171726 0%, #1e1e2f 100%);
   color: #e6e8ee;
   box-shadow: 0 18px 40px rgba(2,6,23,0.6);
   transition: max-width 200ms ease, padding 180ms ease;
+  margin-left: 250px;
 }
 
 .messages {
@@ -256,6 +279,7 @@ onMounted(async () => {
   border-top: 1px solid rgba(255,255,255,0.04);
   background: rgba(18,19,30,0.85);
   gap: 12px;
+  border-radius: 10px;
 }
 
 .composer input {
