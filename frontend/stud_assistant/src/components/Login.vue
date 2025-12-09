@@ -39,6 +39,8 @@
 <script>
 import axios from "axios";
 import { setToken } from "@/utils/localStorage";
+// Backend base URL from env
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7000'
 export default {
   name: "LoginPage",
   data() {
@@ -67,7 +69,7 @@ export default {
       params.append('username', this.username);
       params.append('password', this.password);
       try {
-        const response = await axios.post("http://localhost:7000/token", params,{
+  const response = await axios.post(`${API_BASE}/token`, params,{
           headers: {
             'Content-Type':'application/x-www-form-urlencoded'
           }});

@@ -20,6 +20,7 @@
 
 <script>
 import axios from 'axios';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7000'
 
 export default {
   name: 'SuccessPage',
@@ -40,7 +41,7 @@ export default {
     async verifySubscription() {
       try {
         await axios.post(
-          'http://localhost:7000/payments/verify-session', 
+          `${API_BASE}/payments/verify-session`, 
           { session_id: this.sessionId },
           { withCredentials: true }
         );

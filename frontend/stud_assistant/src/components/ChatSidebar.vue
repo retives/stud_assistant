@@ -31,6 +31,8 @@
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { getToken } from '../utils/localStorage'
+// Backend base URL from env
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7000'
 
 const emit = defineEmits(['update:visible', 'edit-conversation'])
 
@@ -103,7 +105,7 @@ async function fetchConversations() {
   loading.value = true
   error.value = null
   try {
-    const res = await fetch('http://localhost:7000/conversations/', {
+  const res = await fetch(`${API_BASE}/conversations/`, {
       headers: { 'Authorization': `Bearer ${token}` },
       credentials: 'include'
     })
@@ -130,7 +132,7 @@ async function deleteConversaiton(conversationID) {
   loading.value = true
   error.value = null
   try {
-    const res = await fetch(`http://localhost:7000/conversations/${conversationID}/delete`,{
+  const res = await fetch(`${API_BASE}/conversations/${conversationID}/delete`,{
       method: "DELETE",
       headers: { 'Authorization': `Bearer ${token}` },
       credentials: 'include'

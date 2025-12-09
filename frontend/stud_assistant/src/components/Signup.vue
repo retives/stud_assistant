@@ -39,6 +39,9 @@
 <script>
 import axios from "axios";
 
+// Backend base URL from env
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7000'
+
 export default {
   name: "SignupPage",
   data() {
@@ -76,7 +79,7 @@ export default {
       if (this.emailError || this.usernameError || this.passwordError || this.repeatPasswordError) return;
 
       try {
-        await axios.post("http://localhost:8000/signup", {
+  await axios.post(`${API_BASE}/signup`, {
           email: this.email,
           username: this.username,
           password: this.password,

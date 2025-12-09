@@ -29,6 +29,8 @@ import { ref, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getToken } from '@/utils/localStorage'
 import { readJWT } from '@/utils/readJWT'
+// Read backend base URL from environment (Vite)
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7000'
 
 const route = useRoute()
 const router = useRouter()
@@ -74,7 +76,7 @@ async function fetchHistory() {
       return
     }
 
-    const res = await fetch(`http://localhost:7000/conversations/${conversationId.value}`, {
+  const res = await fetch(`${API_BASE}/conversations/${conversationId.value}`, {
       headers: { 'Authorization': `Bearer ${token}` },
       credentials: 'include'
     })
@@ -128,7 +130,7 @@ async function sendMessage() {
 
   try {
     // Backend expects POST to /conversations/{id}/sendmessage and message_content as a query param
-    const url = `http://localhost:7000/conversations/${conversationId.value}/sendmessage`
+  const url = `${API_BASE}/conversations/${conversationId.value}/sendmessage`
     const res = await fetch(url, {
       method: 'POST',
       headers: {
