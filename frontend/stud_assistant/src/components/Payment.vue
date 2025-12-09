@@ -29,7 +29,7 @@
       <p v-if="serverError" class="error-msg server">{{ serverError }}</p>
 
       <div class="links">
-        <router-link to="/dashboard">Back to Dashboard</router-link>
+        <router-link to="/chat/">Back to Dashboard</router-link>
       </div>
     </form>
   </div>

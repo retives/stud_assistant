@@ -15,7 +15,10 @@ PRICE_ID_MAP = {
     "plus_monthly": os.getenv('STRIPE_PRICE_ID_PLUS_MONTHLY'),
 
 }
-@limiter.limit("5/minute")
+# FRONTEND_URL=os.getenv('FRONTEND_URL', 'http://127.0.0.1:5173')
+FRONTEND_URL='http://127.0.0.1:5173'
+
+@limiter.limit("10/minute")
 @router.post("/create-checkout-session", response_model=CheckoutResponse)
 def create_checkout_session(request: Request, plan: PlanSelection, db: db_dependency, user: User = Depends(get_current_user)):
     """
@@ -46,8 +49,8 @@ def create_checkout_session(request: Request, plan: PlanSelection, db: db_depend
             mode="subscription",
             line_items=[{"price": stripe_price_id, "quantity": 1}],
             
-            success_url=f"{os.getenv('FRONTEND_URL')}/payments/success?session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{os.getenv('FRONTEND_URL')}/payments/cancel",
+            success_url=f"{FRONTEND_URL}/payments/success?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{FRONTEND_URL}/payments/cancel",
         )
     except Exception as e:
         print(f"Error creating Stripe Session: {e}")

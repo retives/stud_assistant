@@ -44,6 +44,7 @@
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { getToken, removeToken } from '../utils/localStorage'
 import { useRouter } from 'vue-router'
+import { readJWT } from '../utils/readJWT'
 // import { fetchHistory } from './Chat.vue'
 // Backend base URL from env
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7000'
@@ -60,6 +61,7 @@ const error = ref(null)
 const router = useRouter()
 const token = getToken()
 const hasToken = !!token
+const isPlus = readJWT(token).is
 
 // Menu state for actions (which conversation menu is open)
 const openedMenuId = ref(null)
