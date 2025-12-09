@@ -29,6 +29,7 @@ logging.basicConfig(
 # CORS handling
 # Origins of requests
 origins = [
+    "https://stud-assistant-frontend.onrender.com",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:7070",
