@@ -38,6 +38,7 @@
 <script>
 import axios from "axios";
 import { getToken } from '../utils/localStorage';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7000'
 
 export default { 
   
@@ -64,7 +65,7 @@ export default {
 
       try {
         const response = await axios.post(
-          "http://localhost:7000/payments/create-checkout-session",
+          `${API_BASE}/payments/create-checkout-session`,
           { selected_plan: this.selectedPlan },
           {
             withCredentials: true,
