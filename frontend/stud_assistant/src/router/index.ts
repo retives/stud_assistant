@@ -18,7 +18,7 @@ const routes = [
 
 
 export default createRouter({
-  history: createWebHistory('/stud_assistant/'),  
+  history: createWebHistory('/'),  
   routes,
 })
 
