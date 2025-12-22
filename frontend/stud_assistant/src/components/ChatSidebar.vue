@@ -13,7 +13,7 @@
       <div v-else-if="(!displayChats || displayChats.length === 0)" class="empty">No conversations</div>
       <ul v-else>
         <li v-for="chat in sortedChats" :key="chat.id" class="chat-item">
-          <router-link :to="`/chat/${chat.id}`" class="chat-link" @click="">
+          <router-link :to="{ name: 'Chat', params: { id: chat.id } }" class="chat-link" @click="">
             <div class="title">{{ chat.title || 'Untitled' }}</div>
             <div class="meta">{{ formatDate(chat.date_changed) }}</div>
           </router-link>
@@ -60,8 +60,10 @@ const loading = ref(false)
 const error = ref(null)
 const router = useRouter()
 const token = getToken()
-const hasToken = !!token
-const isPlus = readJWT(token).is
+// Ensure we treat a token as valid only if it decodes successfully.
+const decodedToken = token ? readJWT(token) : null
+const hasToken = !!decodedToken
+const isPlus = decodedToken?.is ?? false
 
 // Menu state for actions (which conversation menu is open)
 const openedMenuId = ref(null)
@@ -82,7 +84,12 @@ function onDocumentClick(e) {
 }
 
 onMounted(() => {
-  // fetch if user is logged in
+  // Only fetch conversations when we have a valid decoded token.
+  if (!hasToken) {
+    error.value = 'Not authenticated'
+    return
+  }
+
   fetchConversations()
   document.addEventListener('click', onDocumentClick)
 })
@@ -178,7 +185,7 @@ async function createNewConversation() {
     })
     const data = await res.json()
     let conversationId = data.id 
-    router.replace(`/chat/${conversationId}`)
+  router.replace({ name: 'Chat', params: { id: conversationId } })
     fetchConversations()
     // this.$forceUpdate();
   }catch (err) {
@@ -196,8 +203,6 @@ async function handleLogout() {
       headers: { 'Authorization': `Bearer ${token}` },
       credentials: 'include'
     })
-    // NOTE: Even if the backend request fails, we usually proceed to clear the client token
-    // to ensure the user is logged out locally.
   } catch (e) {
     console.error("Logout request failed (network issue or server down):", e)
   }
@@ -210,13 +215,10 @@ async function handleLogout() {
   emit('update:visible', false)
   router.replace('/login')
 }
+
 function goToSubscription() {
   router.push({ name: 'Subscription' });
 }
-onMounted(() => {
-  // fetch if user is logged in
-  fetchConversations()
-})
 </script>
 
 <style scoped>

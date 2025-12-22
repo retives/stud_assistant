@@ -1,6 +1,8 @@
 
 <template>
-  <div v-if="conversationId"class="chat-app">
+  <div v-if="conversationId" class="chat-app">
+    <!-- Profile card placed at top-right of the chat area -->
+
     <div ref="messagesContainer" class="messages">
       <div v-if="loading" class="empty-state">Loading conversation...</div>
       <div v-else-if="error" class="error-state">{{ error }}</div>
@@ -25,6 +27,7 @@
   <div v-else>
     <h1>Create a new chat and begin recieving help from AI</h1>
   </div>
+    <ProfileCard class="profile-card-floating" />
 </template>
 
 <script setup>
@@ -32,6 +35,7 @@ import { ref, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getToken } from '@/utils/localStorage'
 import { readJWT } from '@/utils/readJWT'
+import ProfileCard from './ProfileCard.vue'
 
 // Read backend base URL from environment (Vite)
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7000'
@@ -48,11 +52,7 @@ const error = ref(null)
 const messagesContainer = ref(null)
 
 
-onMounted(()=>{
-  if (!getToken()){
-    router.push("/login")
-  }
-})
+
 // Special sender ID for AI responses
 const ASSISTANT_SENDER_ID = '00000000-0000-0000-0000-000000000001'
 
@@ -69,7 +69,6 @@ async function scrollToBottom() {
   }
 }
 
-// Fetch message history on mount
 async function fetchHistory() {
   loading.value = true
   error.value = null
@@ -107,20 +106,12 @@ async function fetchHistory() {
 watch(
   () => route.params.id,
   async (newId, oldId) => {
-    // Only proceed if the ID actually changed and the new ID is valid
     if (newId && newId !== oldId) {
-      // 1. Update the local ref with the new ID
       conversationId.value = newId
-      
-      // 2. Trigger the data fetch for the new conversation
       await fetchHistory() 
       
-      // Optional: Reset input or other component state if needed
-      // input.value = ''
     }
   },
-  // Ensure the watcher runs immediately if the component loads directly with an ID
-  // { immediate: true } // You already handle the initial fetch in onMounted, so this isn't strictly needed
 )
 
 // Send a message
@@ -195,8 +186,10 @@ onMounted(async () => {
   if (!token || !readJWT(token)) {
     return router.push("/login")
   }
+  else{
+    await fetchHistory()
 
-  await fetchHistory()
+  }
 })
 </script>
 
@@ -374,6 +367,13 @@ onMounted(async () => {
     min-width: 80px;
     padding: 8px 12px;
   }
+}
+/* Floating profile card inside chat area */
+.profile-card-floating {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1400;
 }
 </style>
 
