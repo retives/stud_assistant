@@ -36,6 +36,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { getToken } from '@/utils/localStorage'
 import { readJWT } from '@/utils/readJWT'
 import ProfileCard from './ProfileCard.vue'
+import { fetchConversations } from '@/utils/fetchConversations'
+
 
 // Read backend base URL from environment (Vite)
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7000'
