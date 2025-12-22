@@ -1,15 +1,26 @@
 <template>
+    <!-- Profile -->
+     
     <div v-if="token">
-        <div class="profile-card">
-            <div class="info">
-                <div class="username">{{ user.username || 'Guest' }}</div>
-                <div class="email" v-if="user.email">{{ user.email }}</div>
+        <button class="profile-actions" @click="toggleMenu()">
+            <div class="profile-card">
+                <div class="info">
+                    <div class="username">{{ user.username || 'Guest' }}</div>
+                    <div class="email" v-if="user.email">{{ user.email }}</div>
+                </div>
+                <div class="avatar">
+                    <img src="/stud_assistant/src/assets/avatar-placeholder.jpeg" alt="avatar" />
+                </div>
             </div>
-            <div class="avatar">
-                <img src="/stud_assistant/src/assets/avatar-placeholder.jpeg" alt="avatar" />
-            </div>
+        </button>
+        <!-- Action menu -->
+        <div v-if="isMenuOpen">
+
+            <button class="menu-item" @click="handleLogout()">Logout</button>
         </div>
     </div>
+
+    <!-- Guest block -->
     <div v-else>
         <div class="profile-card">
             <button class="submit" @click="router.push('/login')">
@@ -23,14 +34,54 @@
 </template>
 
 <script setup>
-import { getToken } from '@/utils/localStorage'
+
+import { ref } from 'vue'
+import { getToken, removeToken } from '@/utils/localStorage'
 import { readJWT } from '@/utils/readJWT'
 import { useRouter } from 'vue-router'
+import { fetchConversations } from '@/utils/fetchConversations'
 
+// Backend base URL from env
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7000'
 
 const token = getToken()
 const user = token ? readJWT(token) : { username: 'Guest' }
 const router = useRouter()
+
+// boolean menu state; toggles between true/false
+const isMenuOpen = ref(false)
+
+function toggleMenu() {
+    isMenuOpen.value = !isMenuOpen.value
+}
+
+function goToSignup() {
+    router.push({ name: 'Signup' })
+}
+
+// Logout
+async function handleLogout() {
+    try {
+        const currentToken = getToken()
+        if (currentToken) {
+            await fetch(`${API_BASE}/logout`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${currentToken}` },
+                credentials: 'include'
+            })
+        }
+    } catch (e) {
+        console.error('Logout request failed (network issue or server down):', e)
+    }
+
+    // Clear client-side token and navigate to login.
+    removeToken()
+    isMenuOpen.value = false
+    // Refresh conversations list (best-effort); helper returns data but we don't need it here.
+    try { await fetchConversations() } catch (e) { /* ignore */ }
+    router.replace({ name: 'Login' })
+}
+
 </script>
 
 <style scoped>
