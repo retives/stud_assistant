@@ -64,7 +64,7 @@ function toggleMenu() {
 
 function toggleEdit() {
     isEditOpen.value = true
-    isMenuOpen.value = false // Close menu when opening edit
+    isMenuOpen.value = false 
 }
 
 function closeEdit() {

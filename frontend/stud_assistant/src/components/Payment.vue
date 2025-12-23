@@ -17,10 +17,10 @@
       <div class="input-group">
         <label>Benefits</label>
         <ul class="benefits-list">
-          <li>• Unlimited AI interactions</li>
-          <li>• Faster response times</li>
-          <li>• Priority queue</li>
-          <li>• Access to premium tools</li>
+          <li>Unlimited AI interactions</li>
+          <li>Faster response times</li>
+          <li>Priority queue</li>
+          <li>Access to premium tools</li>
         </ul>
       </div>
 
