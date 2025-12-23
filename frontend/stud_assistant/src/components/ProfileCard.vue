@@ -15,7 +15,10 @@
         </button>
         <!-- Action menu -->
         <div v-if="isMenuOpen" @click.stop class="menu">
+            
             <button class="menu-item" @click="toggleEdit()">Edit</button>
+            <button class="menu-item" @click="goToSubscription()">Subscribe to PLus</button>
+
             <button class="menu-item" @click="handleLogout()">Logout</button>
         </div>
         <!-- Edit Profile Modal -->
@@ -87,7 +90,9 @@ async function handleLogout() {
     try { await fetchConversations() } catch (e) { /* ignore */ }
     router.replace({ name: 'Login' })
 }
-
+function goToSubscription(){
+    router.push('/subscription')
+}
 </script>
 
 <style scoped>

@@ -30,12 +30,7 @@
     
     <footer class="sidebar-footer">
       
-      <button v-if="hasToken" class="submit" @click="goToSubscription">
-        Subscribe to Plus
-      </button>
-      <button v-else class="submit" @click="router.push('/signup'); $emit('update:visible', false)">
-        Sign Up
-      </button>
+      <!-- Add settings pop-up-->
     </footer>
     </aside>
 </template>
