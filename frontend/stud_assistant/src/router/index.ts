@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import Home from '@/components/Home.vue'
 import Chat from '@/components/Chat.vue'
 import Login from '@/components/Login.vue'
 import Signup from '@/components/Signup.vue'
@@ -7,7 +8,7 @@ import SuccessPage from '../components/SuccessPage.vue'
 import CancelPage from '../components/CancelPage.vue'
 
 const routes = [
-  { path: '/', name: 'Home', component: Chat },
+  { path: '/', name: 'Home', component: Home },
   { path: '/chat/:id', name: 'Chat', component: Chat, props: true },
   { path: '/login', name: 'Login', component: Login },
   { path: '/signup', name: 'Signup', component: Signup },
