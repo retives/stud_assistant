@@ -42,7 +42,7 @@
 
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { getToken, removeToken } from '../utils/localStorage'
+import { getToken } from '../utils/localStorage'
 import { useRouter } from 'vue-router'
 import { readJWT } from '../utils/readJWT'
 import { fetchConversations } from '@/utils/fetchConversations'
