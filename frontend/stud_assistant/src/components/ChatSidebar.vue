@@ -13,7 +13,7 @@
       <div v-else-if="(!displayChats || displayChats.length === 0)" class="empty">No conversations</div>
       <ul v-else>
         <li v-for="chat in sortedChats" :key="chat.id" class="chat-item">
-          <router-link :to="`/chat/${chat.id}`" class="chat-link" @click="">
+          <router-link :to="{ name: 'Chat', params: { id: chat.id } }" class="chat-link" @click="">
             <div class="title">{{ chat.title || 'Untitled' }}</div>
             <div class="meta">{{ formatDate(chat.date_changed) }}</div>
           </router-link>
@@ -30,21 +30,18 @@
     
     <footer class="sidebar-footer">
       
-      <button v-if="hasToken" class="submit" @click="goToSubscription">
-        Subscribe to Plus
-      </button>
-      <button v-else class="submit" @click="router.push('/signup'); $emit('update:visible', false)">
-        Sign Up
-      </button>
+      <!-- Add settings pop-up-->
     </footer>
     </aside>
 </template>
 
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { getToken, removeToken } from '../utils/localStorage'
+import { getToken } from '../utils/localStorage'
 import { useRouter } from 'vue-router'
 import { readJWT } from '../utils/readJWT'
+import { fetchConversations } from '@/utils/fetchConversations'
+
 // import { fetchHistory } from './Chat.vue'
 // Backend base URL from env
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7000'
@@ -60,11 +57,30 @@ const loading = ref(false)
 const error = ref(null)
 const router = useRouter()
 const token = getToken()
-const hasToken = !!token
-const isPlus = readJWT(token).is
+// Ensure we treat a token as valid only if it decodes successfully.
+const decodedToken = token ? readJWT(token) : null
+const hasToken = !!decodedToken
+const isPlus = decodedToken?.is ?? false
 
 // Menu state for actions (which conversation menu is open)
 const openedMenuId = ref(null)
+
+// Local wrapper to adapt the util's result into this component's refs
+async function loadConversations() {
+  loading.value = true
+  error.value = null
+  const res = await fetchConversations()
+  if (!res) {
+    localChats.value = []
+    error.value = 'Failed to load conversations'
+  } else if (res.error) {
+    localChats.value = []
+    error.value = res.error
+  } else {
+    localChats.value = res.data || []
+  }
+  loading.value = false
+}
 
 function toggleMenu(conversationID) {
   openedMenuId.value = openedMenuId.value === conversationID ? null : conversationID
@@ -82,8 +98,12 @@ function onDocumentClick(e) {
 }
 
 onMounted(() => {
-  // fetch if user is logged in
-  fetchConversations()
+  // Only fetch conversations when we have a valid decoded token.
+  if (!hasToken) {
+    error.value = 'Not authenticated'
+    return
+  }
+  loadConversations()
   document.addEventListener('click', onDocumentClick)
 })
 
@@ -115,32 +135,6 @@ function formatDate(d) {
   }
 }
 
-async function fetchConversations() {
-  const token = getToken()
-  if (!token) return
-  loading.value = true
-  error.value = null
-  try {
-  const res = await fetch(`${API_BASE}/conversations/`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-      credentials: 'include'
-    })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const data = await res.json()
-    if (Array.isArray(data)) {
-      localChats.value = data
-    } else if (data && Array.isArray(data.conversations)) {
-      localChats.value = data.conversations
-    } else {
-      localChats.value = []
-    }
-  } catch (err) {
-    console.error('Failed to fetch conversations', err)
-    error.value = err.message || String(err)
-  } finally {
-    loading.value = false
-  }
-}
 
 async function deleteConversaiton(conversationID) {
   const token = getToken()
@@ -157,7 +151,7 @@ async function deleteConversaiton(conversationID) {
       throw new Error(`Server error: ${res.status}`)
     }
 
-    await fetchConversations()
+  await loadConversations()
 
   }catch (err) {
     console.error('Failed to fetch conversations', err)
@@ -178,8 +172,8 @@ async function createNewConversation() {
     })
     const data = await res.json()
     let conversationId = data.id 
-    router.replace(`/chat/${conversationId}`)
-    fetchConversations()
+  router.replace({ name: 'Chat', params: { id: conversationId } })
+    await loadConversations()
     // this.$forceUpdate();
   }catch (err) {
     console.error('Failed to fetch conversations', err)
@@ -188,35 +182,7 @@ async function createNewConversation() {
     loading.value = false
   }
 }
-async function handleLogout() {
-  // 1. Invalidate session on the backend
-  try {
-    const res = await fetch(`${API_BASE}/logout`, {
-      method: "POST",
-      headers: { 'Authorization': `Bearer ${token}` },
-      credentials: 'include'
-    })
-    // NOTE: Even if the backend request fails, we usually proceed to clear the client token
-    // to ensure the user is logged out locally.
-  } catch (e) {
-    console.error("Logout request failed (network issue or server down):", e)
-  }
 
-
-  removeToken()
-  token.value = null 
-
-
-  emit('update:visible', false)
-  router.replace('/login')
-}
-function goToSubscription() {
-  router.push({ name: 'Subscription' });
-}
-onMounted(() => {
-  // fetch if user is logged in
-  fetchConversations()
-})
 </script>
 
 <style scoped>

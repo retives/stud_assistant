@@ -1,6 +1,8 @@
 
 <template>
-  <div v-if="conversationId"class="chat-app">
+  <div v-if="conversationId" class="chat-app">
+    <!-- Profile card placed at top-right of the chat area -->
+
     <div ref="messagesContainer" class="messages">
       <div v-if="loading" class="empty-state">Loading conversation...</div>
       <div v-else-if="error" class="error-state">{{ error }}</div>
@@ -23,8 +25,13 @@
     </div>
   </div>
   <div v-else>
-    <h1>Create a new chat and begin recieving help from AI</h1>
+    <div class="no-chat-selected">
+      <h2>No conversation selected</h2>
+      <p>Please select a conversation from the sidebar or create a new one.</p>
+      <button @click="router.push('/')" class="back-home-btn">Back to Home</button>
+    </div>
   </div>
+    <ProfileCard class="profile-card-floating" />
 </template>
 
 <script setup>
@@ -32,13 +39,19 @@ import { ref, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getToken } from '@/utils/localStorage'
 import { readJWT } from '@/utils/readJWT'
+import ProfileCard from './ProfileCard.vue'
+import { fetchConversations } from '@/utils/fetchConversations'
+
+
+// Read backend base URL from environment (Vite)
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7000'
 
 // Read backend base URL from environment (Vite)
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7000'
 
 const route = useRoute()
 const router = useRouter()
-const conversationId = ref(route.params.id || '1')
+const conversationId = ref(route.params.id)
 
 const messages = ref([])
 const input = ref('')
@@ -48,11 +61,7 @@ const error = ref(null)
 const messagesContainer = ref(null)
 
 
-onMounted(()=>{
-  if (!getToken()){
-    router.push("/login")
-  }
-})
+
 // Special sender ID for AI responses
 const ASSISTANT_SENDER_ID = '00000000-0000-0000-0000-000000000001'
 
@@ -69,7 +78,6 @@ async function scrollToBottom() {
   }
 }
 
-// Fetch message history on mount
 async function fetchHistory() {
   loading.value = true
   error.value = null
@@ -107,20 +115,12 @@ async function fetchHistory() {
 watch(
   () => route.params.id,
   async (newId, oldId) => {
-    // Only proceed if the ID actually changed and the new ID is valid
     if (newId && newId !== oldId) {
-      // 1. Update the local ref with the new ID
       conversationId.value = newId
-      
-      // 2. Trigger the data fetch for the new conversation
       await fetchHistory() 
       
-      // Optional: Reset input or other component state if needed
-      // input.value = ''
     }
   },
-  // Ensure the watcher runs immediately if the component loads directly with an ID
-  // { immediate: true } // You already handle the initial fetch in onMounted, so this isn't strictly needed
 )
 
 // Send a message
@@ -195,8 +195,10 @@ onMounted(async () => {
   if (!token || !readJWT(token)) {
     return router.push("/login")
   }
+  else{
+    await fetchHistory()
 
-  await fetchHistory()
+  }
 })
 </script>
 
@@ -374,6 +376,52 @@ onMounted(async () => {
     min-width: 80px;
     padding: 8px 12px;
   }
+}
+/* Floating profile card inside chat area */
+.profile-card-floating {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1400;
+}
+
+.no-chat-selected {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 70vh;
+  text-align: center;
+  color: #eef2f6;
+}
+
+.no-chat-selected h2 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #f8fafc;
+}
+
+.no-chat-selected p {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  color: #cbd5e1;
+}
+
+.back-home-btn {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.back-home-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 </style>
 

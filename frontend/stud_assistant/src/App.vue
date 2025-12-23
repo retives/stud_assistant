@@ -1,24 +1,38 @@
 <template>
   <div id="app">
-    <chat-sidebar v-model:visible="sidebarOpen" :chats="chats" />
+    <!-- Only show sidebar for authenticated users and not on landing page -->
+    <chat-sidebar 
+      v-if="showSidebar" 
+      v-model:visible="sidebarOpen" 
+      :chats="chats" 
+    />
 
-    <header class="topbar">
+    <header v-if="showSidebar" class="topbar">
       <button class="menu-btn" @click="sidebarOpen = !sidebarOpen">☰</button>
       <div class="app-title">Study Assistant</div>
     </header>
 
-    <main class="main-area" :class="{ 'shifted': sidebarOpen }">
+    <main class="main-area" :class="{ 'shifted': showSidebar && sidebarOpen }">
       <router-view />
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import ChatSidebar from './components/ChatSidebar.vue'
+import { getToken } from './utils/localStorage'
 
 // Sidebar visible by default; user can toggle to hide it
 const sidebarOpen = ref(true)
+const route = useRoute()
+
+// Show sidebar only for authenticated users
+const showSidebar = computed(() => {
+  const token = getToken()
+  return !!token
+})
 
 // Example data in the format you specified. In real use pass this in or fetch from the API.
 const chats = ref([
