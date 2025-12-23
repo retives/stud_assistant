@@ -46,6 +46,9 @@ import { fetchConversations } from '@/utils/fetchConversations'
 // Read backend base URL from environment (Vite)
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7000'
 
+// Read backend base URL from environment (Vite)
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7000'
+
 const route = useRoute()
 const router = useRouter()
 const conversationId = ref(route.params.id)
