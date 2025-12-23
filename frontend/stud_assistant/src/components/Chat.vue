@@ -44,7 +44,7 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7000'
 
 const route = useRoute()
 const router = useRouter()
-const conversationId = ref(route.params.id || '1')
+const conversationId = ref(route.params.id)
 
 const messages = ref([])
 const input = ref('')
