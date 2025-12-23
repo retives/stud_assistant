@@ -6,6 +6,7 @@ import Signup from '@/components/Signup.vue'
 import Payment from '@/components/Payment.vue'
 import SuccessPage from '../components/SuccessPage.vue'
 import CancelPage from '../components/CancelPage.vue'
+import NotFound from '../components/NotFound.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: Home },
@@ -15,6 +16,7 @@ const routes = [
   { path: '/subscription', name: 'Subscription', component: Payment },
   {path: '/payments/success', name: 'SubscriptionSuccess', component: SuccessPage},
   {path: '/payments/cancel', name: 'SubscriptionCancel', component: CancelPage},
+  {path: '/:catchAll(.*)*', component: NotFound}
 ]
 
 
