@@ -9,8 +9,12 @@
 
     <header v-if="showSidebar" class="topbar">
       <button class="menu-btn" @click="sidebarOpen = !sidebarOpen">☰</button>
-      <div class="app-title">Study Assistant</div>
+      <!-- Only the title will slide when the sidebar opens; the button is fixed -->
+      <div class="app-title" :class="{ shifted: showSidebar && sidebarOpen }">Study Assistant</div>
     </header>
+
+    <!-- Show profile card on landing page (root) so guests can login/signup -->
+    <ProfileCard v-if="isLanding" class="global-profile" />
 
     <main class="main-area" :class="{ 'shifted': showSidebar && sidebarOpen }">
       <router-view />
@@ -19,20 +23,33 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import ChatSidebar from './components/ChatSidebar.vue'
+import ProfileCard from './components/ProfileCard.vue'
 import { getToken } from './utils/localStorage'
 
 // Sidebar visible by default; user can toggle to hide it
 const sidebarOpen = ref(true)
-const route = useRoute()
+
+// Reactive auth token: poll localStorage so SPA updates when token changes
+const authToken = ref(getToken())
+let pollId = null
+onMounted(() => {
+  pollId = setInterval(() => {
+    authToken.value = getToken()
+  }, 500)
+})
+onUnmounted(() => {
+  if (pollId) clearInterval(pollId)
+})
 
 // Show sidebar only for authenticated users
-const showSidebar = computed(() => {
-  const token = getToken()
-  return !!token
-})
+const showSidebar = computed(() => !!authToken.value)
+
+// Show profile card on the landing page (Home) for unauthenticated users
+const route = useRoute()
+const isLanding = computed(() => (route.name === 'Home' || route.path === '/') && !showSidebar.value)
 
 // Example data in the format you specified. In real use pass this in or fetch from the API.
 const chats = ref([
@@ -60,9 +77,14 @@ const chats = ref([
   padding:0 12px;
   border-bottom:1px solid var(--color-border, #e5e5e5);
 }
-.menu-btn { font-size:20px; background:transparent; border:none; cursor:pointer }
-.app-title { font-weight:700 }
+.menu-btn { font-size:30px; background:transparent; border:none; cursor:pointer; color: #ffffff; margin-bottom: 10px; }
+.menu-btn { position: fixed; top: 12px; left: 12px; z-index: 1400 }
+.app-title { font-weight:700; display:inline-block; margin-left:48px; transition: transform 240ms ease-in-out }
+.app-title.shifted { transform: translateX(280px); }
 .main-area { padding:18px; transition: margin-left 240ms ease-in-out }
 .main-area.shifted { margin-left: 280px }
 #app { min-height:100vh; background:var(--color-background); color:var(--color-text) }
+
+/* Global profile card positioning */
+.global-profile{ position: fixed; top: 20px; right: 20px; z-index: 1500 }
 </style>
