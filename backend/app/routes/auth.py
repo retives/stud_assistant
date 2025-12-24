@@ -4,7 +4,7 @@ import uuid
 from typing import Annotated
 from starlette import status
 from app.database import db_dependency
-from app.schemas import UserLogin, UserRead, UserCreate
+from app.schemas import UserPublicUpadte, UserRead, UserCreate
 from app.models import User
 from app.database import get_db
 from app.security import verify_password, hash_password, create_access_token, is_password_strong, read_access_token
@@ -101,7 +101,6 @@ async def register_user(request: Request, user_request: UserCreate, db: db_depen
 @limiter.limit("5/minute")
 @router.post('/token',response_model=Token)
 async def login_for_access_token(request: Request, form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db:db_dependency): # type: ignore
-    # User model
     user = authenticate_user(form_data.username, form_data.password, db)
     # Token creation
     token = create_access_token(
@@ -111,15 +110,13 @@ async def login_for_access_token(request: Request, form_data: Annotated[OAuth2Pa
 
 # Logout
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout(db: db_dependency, response: Response, user = Depends(get_current_user)): # <--- INJECT THE RESPONSE OBJECT
+def logout(db: db_dependency, response: Response, user = Depends(get_current_user)): 
     """
     Clears the access token cookie from the client.
     """
-    # 1. Delete the cookie. Note the name must match how it was set during login.
+   
     response.delete_cookie(key="access_token")
     
-    # 2. Return the response object.
-    # Since the status code is set to 204 (No Content), the client expects no body.
     return response    
 
 # Temp routes
@@ -131,6 +128,20 @@ async def delete_user(db: db_dependency, user_id: str, current_user: Annotated[U
         db.commit()
     return {"message": "User deleted successfully"}
 
+@router.patch('/update-account', status_code=status.HTTP_200_OK)
+async def update_user(db: db_dependency, updated_user: UserPublicUpadte, current_user= Depends(get_current_user)):
+    user = db.query(User).filter(User.id == current_user.id).first()
+    if not user:
+        return HTTPException(404, "User not found")
+    user.username = updated_user.username
+
+    token = create_access_token(
+        data = {'username': updated_user.username, 'id': str(user.id), 'email': user.email}
+        )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return Token(access_token=token, token_type='bearer')
 
 @router.get('/list-users', status_code=status.HTTP_200_OK)
 async def list_users(db: db_dependency, current_user: Annotated[User, Depends(get_current_user)]): # type: ignore
