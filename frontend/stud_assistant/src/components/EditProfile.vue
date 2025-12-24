@@ -28,9 +28,9 @@
 
 <script setup>
 import { ref } from 'vue'
-import { getToken } from '@/utils/localStorage'
+import { getToken, setToken, removeToken } from '@/utils/localStorage'
 import { readJWT } from '@/utils/readJWT'
-
+import axios from "axios";
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7000'
 
 const token = getToken()
@@ -47,10 +47,28 @@ function handleFileUpload(event) {
         previewUrl.value = URL.createObjectURL(file)
     }
 }
+async function saveProfile() {
+  try {
+    const response = await axios.patch(`${API_BASE}/update-account`, 
+      { username: username.value },
+      {
+        headers: { 'Authorization': `Bearer ${token}` },
+        withCredentials: true
+      }
+    );
 
-function saveProfile() {
-    console.log('Saving profile:', username.value)
-    emit('close')
+    const newToken = response.data.access_token; 
+    removeToken()
+    setToken(newToken);
+    emit('close');
+
+  } catch (err) {
+    if (err.response) {
+      console.error("Server Error:", err.response.data);
+    } else {
+      console.error("Network Error:", err.message);
+    }
+  }
 }
 
 function cancelEdit() {
