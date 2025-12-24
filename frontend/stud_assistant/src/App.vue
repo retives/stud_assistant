@@ -14,7 +14,7 @@
     </header>
 
     <!-- Show profile card on landing page (root) so guests can login/signup -->
-    <ProfileCard v-if="isLanding" class="global-profile" />
+    <ProfileCard class="global-profile" />
 
     <main class="main-area" :class="{ 'shifted': showSidebar && sidebarOpen }">
       <router-view />
