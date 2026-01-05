@@ -20,12 +20,10 @@ if not key:
 
 class StudAgent:
     def __init__(self, courses, faculty, department, group, ai_key):
-        # Saving the user data
         self.courses = courses
         self.faculty = faculty
         self.department = department
         self.group = group
-        # Agent creation
         self.agent = ChatGoogleGenerativeAI(
             google_api_key=ai_key,
             model='gemini-2.5-flash'
@@ -36,7 +34,7 @@ class StudAgent:
     # --- System prompt ---
         self.chat_prompt = ChatPromptTemplate([
             ("system",""""
-    Ти помічник студента Івано-Франківського національного технічного університету нафти і газу студенту групи {group}, що навчається на фуакультеті {faculty}, на кафедрі {department}.
+    Ти помічник студента Івано-Франківського національного технічного університету нафти і газу студенту групи {group}, що навчається на факультеті {faculty}, на кафедрі {department}.
     Ти допомагаєш студенту з навчальними питаннями, пов'язаними з його курсами: {courses}, а саме надаєш відповіді на питання, пояснюєш матеріал, допомагаєш з домашніми завданнями та підготовкою до іспитів.
     Ти фільтруєш розклад за тими дисциплінами, що вивчає студент. Надавай корректні, точні та зрозумілі відповіді, використовуючи просту мову.
     Якщо ти не знаєш відповіді на питання, чесно про це скажи.
