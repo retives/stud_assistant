@@ -1,22 +1,31 @@
-from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, PromptTemplate, MessagesPlaceholder
+from langchain_core.runnables import RunnableWithMessageHistory, ConfigurableFieldSpec, RunnableConfig
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_classic.memory import ConversationBufferMemory
-from langchain.messages import SystemMessage
-from rich.console import Console
-from rich.markdown import Markdown
+from langchain_core.messages import HumanMessage, AIMessage
+from langchain_community.chat_message_histories import ChatMessageHistory
 from dotenv import load_dotenv
-from app.services.classifier import predict_label, preprocess_text, vectorizer, classifier
 from langsmith import traceable
+from app.database import get_db
+from app.models import Message
 import os
 
 load_dotenv()
+system_id = os.getenv("SYSTEM_ID")
+def get_chat_history(conversation_id: str):
+    db = next(get_db())
+    db_messages = db.query(Message).filter(
+        Message.conversation_id == conversation_id
+    ).order_by(Message.date.asc()).all()
 
-# Gemini key
-key = os.getenv("GEMINI_API_KEY")
-if not key:
-    print("No api key!!!")
-    exit(0)
 
+    langchain_history = ChatMessageHistory()
+    for msg in db_messages:
+        if msg.sender_id != system_id:
+            langchain_history.add_message(HumanMessage(content=msg.content))
+        else:
+            langchain_history.add_message(AIMessage(content=msg.content))
+
+    return langchain_history
 
 class StudAgent:
     def __init__(self, courses, faculty, department, group, ai_key):
@@ -28,7 +37,6 @@ class StudAgent:
             google_api_key=ai_key,
             model='gemini-2.5-flash'
         )
-
 
 
     # --- System prompt ---
@@ -43,6 +51,7 @@ class StudAgent:
     Якщо студент задає питання не пов'язане з навчанням, поясни йому, що ти спецалізований помічник з навчання та дане питання не входить в твою компетенцію.
     Якщо тобі не вистачає інформації про студента, запитай його щодо уточнення цих даних.
     """),
+            MessagesPlaceholder(variable_name="history"),
             ("human", "{user_input}")
         ])
     # -------------------------
@@ -55,18 +64,36 @@ class StudAgent:
                         Відповідай лише заголовком.
                     """
         )
+        chat_pipeline = self.chat_prompt | self.agent
+
+        self.pipeline_with_history = RunnableWithMessageHistory(
+            chat_pipeline,
+            get_session_history=get_chat_history,
+            history_messages_key='history',
+            history_factory_config=[
+                ConfigurableFieldSpec(
+                    id='chat_history',
+                    annotation=str,
+                    name='Chat History',
+                    description='Chat History',
+                    default=None,
+                )
+            ]
+        )
+    # End of __init__
+
     # Main tool to generate responses
     @traceable
-    def ask(self, message):
-        chat_messages = self.chat_prompt.format_messages(
-            courses= self.courses,
-            faculty=self.faculty,
-            department=self.department,
-            group=self.group,
-            user_input=message
+    def ask(self, message, conversation_id):
+        config = RunnableConfig(configurable={"chat_history": conversation_id})
+        response = self.pipeline_with_history.invoke(
+            {"user_input": message,
+             "group": self.group,
+             "faculty": self.faculty,
+             "department": self.department,
+             "courses": self.courses},
+            config=config
         )
-
-        response = self.agent.invoke(chat_messages)
         return response.content if hasattr(response, 'content') else response
 
     # Initial title generation
@@ -76,39 +103,6 @@ class StudAgent:
             user_message=message,
         )
         response =  self.agent.invoke(title_messages)
+
         return response.content if hasattr(response, 'content') else response
-    def update_user_info(self, courses, faculty, department, group):
-        self.courses = courses
-        self.faculty = faculty
-        self.department = department
-        self.group = group
 
-# Agent instance to export
-stud_agent = StudAgent(
-    courses=[],
-    faculty=None,
-    department=None,
-    group=None,
-    ai_key=key
-)
-
-
-if __name__ == '__main__':
-    chat_agent = StudAgent(
-        # --- Student data ---
-        courses=[''],
-        faculty = 'Факультет інформаційних технологій',
-        department = 'Інженерія програмного забезпечення',
-        group = 'ІП-22-1',
-        # api key
-        ai_key=key
-    )
-    user_message = "Як справлятись з вигоранням студенту?"
-    label = predict_label(preprocess_text(user_message))
-    print(label)
-    response = chat_agent.ask(user_message)
-    title = chat_agent.get_title(user_message)
-
-    console = Console()
-    console.print(title)
-    console.print(response)

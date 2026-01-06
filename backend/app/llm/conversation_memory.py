@@ -1,5 +1,5 @@
 from langchain_core.chat_history import BaseChatMessageHistory
-from langchain_core.prompts import ChatPromptTemplate, StringPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 from langchain_core.messages import BaseMessage, SystemMessage
 from pydantic import BaseModel, Field
 from app.llm.agent import StudAgent
@@ -14,16 +14,15 @@ class ConversationSummaryBufferMemory(BaseChatMessageHistory, BaseModel):
     def add_messages(self, messages: list[BaseMessage]):
 
         self.messages.extend(messages)
-        summary_prompt = ChatPromptTemplate(
-            SystemMessagePromptTemplate(
-                "Тобі треба проаналізувати користувацькі повідомлення та нові повідомлення " \
+        summary_prompt = ChatPromptTemplate([
+            SystemMessagePromptTemplate.from_template(
+                "Тобі треба проаналізувати користувацькі повідомлення та нові повідомлення "
                 "та згенерувати новий короткий підсумок повідомлень. Зберігай максимумінформативності за мінімум слів."
             ),
-            HumanMessagePromptTemplate(
-                "Історія повідомлень: \n{existing_summary}\n\n"\
-                "Нові повідомлення: \n{messages}"
+            HumanMessagePromptTemplate.from_template(
+                "Історія повідомлень: \n{existing_summary}\nНові повідомлення: \n{messages}"
             )
-        )
+        ])
         new_summary = self.llm.invoke(
             summary_prompt.format_messages(
                 existing_summary=self.messages.content,
