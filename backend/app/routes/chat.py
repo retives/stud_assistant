@@ -5,13 +5,23 @@ from app.schemas import ConversationNew, ConversationRead, ConversationMessages,
 from app.models import Conversation, Message
 from typing import List
 from app.routes.auth import get_current_user
-from app.llm.agent import stud_agent
+from app.llm.agent import StudAgent
 from app.config import SYSTEM_ID
 from uuid import UUID, uuid4
+import os
 
 import uuid
 from datetime import datetime, timezone
 router = APIRouter()
+
+# Gemini key
+key = os.getenv("GEMINI_API_KEY")
+if not key:
+    print("No api key!!!")
+    exit(0)
+
+def get_chat_history(conversation_id, db:db_dependency):
+    db.query(Conversation).filter(Conversation.id == conversation_id)
 
 @router.post('/conversations/new-conversation')
 def create_conversation(db: db_dependency, 
@@ -192,9 +202,17 @@ async def send_message(
     group = 'ІП-22-1',
 
     # Initializing student data
-    stud_agent.update_user_info(courses, faculty, department, group)
+    stud_agent = StudAgent(
+        courses=courses,
+        faculty=faculty,
+        department=department,
+        group=group,
+        ai_key=key
+       )
+    # Initializing chat memory
+
     # Generating response
-    response = stud_agent.ask(message_content)
+    response = stud_agent.ask(message_content, conversation_id)
     print(response)
     # Assigning title if needed
     if conv.title == "New chat":
