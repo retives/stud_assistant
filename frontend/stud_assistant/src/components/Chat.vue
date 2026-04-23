@@ -46,8 +46,6 @@ import { fetchConversations } from '@/utils/fetchConversations'
 // Read backend base URL from environment (Vite)
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7000'
 
-// Read backend base URL from environment (Vite)
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7000'
 
 const route = useRoute()
 const router = useRouter()
@@ -180,6 +178,14 @@ async function sendMessage() {
       sender_name: 'Assistant'
     })
     await scrollToBottom()
+    // If this conversation was created as a "pending" conversation (no messages yet),
+    // clear that pending marker so future "New chat" clicks will create a new one.
+    try {
+      const pending = localStorage.getItem('pending_conversation_id')
+      if (pending && pending === conversationId.value) {
+        localStorage.removeItem('pending_conversation_id')
+      }
+    } catch (e) { /* ignore localStorage errors */ }
   } catch (err) {
     console.error('Failed to send message', err)
     error.value = err.message || 'Failed to send message'

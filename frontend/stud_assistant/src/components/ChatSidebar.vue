@@ -3,7 +3,6 @@
     <header class="sidebar-header">
       <h3 v-if="hasToken">Conversations</h3>
       <h3 v-else>Stud Assistant</h3>
-      <button class="close-btn" @click="$emit('update:visible', false)">✕</button>
     </header>
 
     <div v-if="hasToken" class="chat-list">
@@ -13,10 +12,24 @@
       <div v-else-if="(!displayChats || displayChats.length === 0)" class="empty">No conversations</div>
       <ul v-else>
         <li v-for="chat in sortedChats" :key="chat.id" class="chat-item">
-          <router-link :to="{ name: 'Chat', params: { id: chat.id } }" class="chat-link" @click="">
-            <div class="title">{{ chat.title || 'Untitled' }}</div>
-            <div class="meta">{{ formatDate(chat.date_changed) }}</div>
-          </router-link>
+                <div class="chat-link">
+                  <template v-if="toggleEditId !== chat.id">
+                    <router-link :to="{ name: 'Chat', params: { id: chat.id } }" class="title-link" @click="">
+                      <div class="title">{{ chat.title || 'Untitled' }}</div>
+                    </router-link>
+                  </template>
+                  <template v-else>
+                    <div class="edit-title">
+                      <input type="text" v-model="editTitles[chat.id]" class="edit-input" />
+                      <div class="edit-actions">
+                        <button class="action save" @click.stop.prevent="confirmEdit(chat.id)">Save</button>
+                        <button class="action cancel" @click.stop.prevent="cancelEdit(chat.id)">Cancel</button>
+                      </div>
+                    </div>
+                  </template>
+                  <div class="meta">{{ formatDate(chat.date_changed) }}</div>
+                    <hr>  
+                </div>
           <div class="actions">
             <button class="dots" @click.stop="toggleMenu(chat.id)" aria-label="Open actions">⋮</button>
             <div v-if="openedMenuId === chat.id" class="menu" @click.stop>
@@ -24,6 +37,7 @@
               <button class="menu-item" @click="deleteConversaiton(chat.id)">Delete</button>
             </div>
           </div>
+          
         </li>
       </ul>
     </div>
@@ -36,7 +50,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, reactive, onMounted, onUnmounted } from 'vue'
 import { getToken } from '../utils/localStorage'
 import { useRouter } from 'vue-router'
 import { readJWT } from '../utils/readJWT'
@@ -61,10 +75,12 @@ const token = getToken()
 const decodedToken = token ? readJWT(token) : null
 const hasToken = !!decodedToken
 const isPlus = decodedToken?.is ?? false
-
+const blankConversationId = null
 // Menu state for actions (which conversation menu is open)
 const openedMenuId = ref(null)
-
+const toggleEditId = ref(null)
+// editTitles holds temporary edited titles by conversation id (reactive plain object)
+const editTitles = reactive({})
 // Local wrapper to adapt the util's result into this component's refs
 async function loadConversations() {
   loading.value = true
@@ -90,6 +106,57 @@ function editConversation(conversationID) {
   // emit to parent for handling edit flow
   emit('edit-conversation', conversationID)
   openedMenuId.value = null
+  // enter edit mode for this conversation and prefill the input
+  toggleEditId.value = conversationID
+  const chat = localChats.value.find(c => c.id === conversationID)
+  editTitles[conversationID] = chat?.title || ''
+}
+
+function cancelEdit(conversationID) {
+  if (toggleEditId.value === conversationID) toggleEditId.value = null
+  // optionally clear the draft (we keep drafts to allow reopening)
+}
+
+async function confirmEdit(conversationID) {
+  const newTitle = (editTitles[conversationID] || '').trim()
+  if (!newTitle) {
+    error.value = 'Title cannot be empty'
+    return
+  }
+
+  const token = getToken()
+  if (!token) {
+    error.value = 'Not authenticated'
+    return
+  }
+
+  loading.value = true
+  error.value = null
+  try {
+    const res = await fetch(`${API_BASE}/conversations/${conversationID}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({ title: newTitle })
+    })
+    if (!res.ok) throw new Error(`Server error: ${res.status}`)
+
+    // Update the localChats entry so UI reflects the new title immediately
+    const idx = localChats.value.findIndex(c => c.id === conversationID)
+    if (idx !== -1) {
+      localChats.value[idx] = { ...localChats.value[idx], title: newTitle, date_changed: new Date().toISOString() }
+    }
+
+    toggleEditId.value = null
+  } catch (err) {
+    console.error('Failed to update conversation title', err)
+    error.value = err.message || String(err)
+  } finally {
+    loading.value = false
+  }
 }
 
 // Close menu when clicking outside
@@ -102,9 +169,10 @@ onMounted(() => {
   if (!hasToken) {
     error.value = 'Not authenticated'
     return
-  }
+  }else{
   loadConversations()
   document.addEventListener('click', onDocumentClick)
+  }
 })
 
 onUnmounted(() => {
@@ -161,22 +229,36 @@ async function deleteConversaiton(conversationID) {
   }
 }
 async function createNewConversation() {
-  if (!token) return
+  // Read fresh token
+  const tokenNow = getToken()
+  if (!tokenNow) return
+
+  // If there is an existing pending conversation (user created it but hasn't
+  // sent any messages yet), navigate to it instead of creating another.
+  const pending = localStorage.getItem('pending_conversation_id')
+  if (pending) {
+    router.replace({ name: 'Chat', params: { id: pending } })
+    return
+  }
+
   loading.value = true
   error.value = null
-  try{
-    const res = await fetch(`${API_BASE}/conversations/new-conversation`,{
-      method: "POST",
-      headers: { 'Authorization': `Bearer ${token}` },
+  try {
+    const res = await fetch(`${API_BASE}/conversations/new-conversation`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${tokenNow}` },
       credentials: 'include'
     })
     const data = await res.json()
-    let conversationId = data.id 
-  router.replace({ name: 'Chat', params: { id: conversationId } })
+    const conversationId = data.id
+
+    // Save as pending until at least one message is written in this conversation
+    try { localStorage.setItem('pending_conversation_id', conversationId) } catch (e) { /* ignore */ }
+
+    router.replace({ name: 'Chat', params: { id: conversationId } })
     await loadConversations()
-    // this.$forceUpdate();
-  }catch (err) {
-    console.error('Failed to fetch conversations', err)
+  } catch (err) {
+    console.error('Failed to create conversation', err)
     error.value = err.message || String(err)
   } finally {
     loading.value = false
@@ -191,6 +273,7 @@ async function createNewConversation() {
   top: 0;
   left: 0;
   height: 100vh;
+  min-height: max-content;
   width: 280px;
   background: var(--color-background-soft, #ffffff);
   border-right: 1px solid var(--color-border, #e5e5e5);
@@ -204,9 +287,8 @@ async function createNewConversation() {
   
 }
 .chat-sidebar.open { transform: translateX(0%); }
-.sidebar-header { display:flex; align-items:center; justify-content:space-between; padding:8px 4px; }
+.sidebar-header { display:flex; align-items:center; justify-content:space-between; padding:8px 4px; margin-top: 30px}
 .sidebar-header h3 { margin:0; font-size:1.05rem; }
-.close-btn { background:transparent; border:none; font-size:1.1rem; cursor:pointer }
 .chat-list { overflow:auto; padding-top:8px }
 .chat-list ul { list-style:none; padding:0; margin:0 }
 .chat-link { display:block; padding:10px; border-radius:8px; text-decoration:none; color:var(--color-text); }
@@ -241,5 +323,14 @@ async function createNewConversation() {
   margin-top: auto;
   width: 100%;
 }
+
+/* Edit title input styling */
+.edit-title{ display:flex; align-items:center; gap:8px }
+.edit-input{ flex:1; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:#121322; color:#eef2ff }
+.edit-input:focus{ outline:none; box-shadow:0 0 0 2px rgba(34,211,238,0.15) }
+.edit-actions{ display:flex; gap:6px }
+.action{ padding:6px 10px; border-radius:6px; cursor:pointer; border:none }
+.action.save{ background: linear-gradient(90deg,#4ade80 0%, #06b6d4 100%); color:#001219 }
+.action.cancel{ background: transparent; color:#e6f0ff; border:1px solid rgba(255,255,255,0.03) }
 
 </style>
